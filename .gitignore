@@ -1,0 +1,31 @@
+# .NET
+bin/
+obj/
+*.user
+*.suo
+*.vs/
+publish/
+local.settings.json
+
+# Node / SPFx
+node_modules/
+lib/
+dist/
+temp/
+sharepoint/
+*.sppkg
+.yo-rc.json
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Secrets
+*.pfx
+*.cer
+.env

@@ -1,0 +1,58 @@
+name: Deploy Azure Functions
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "functions/**"
+  workflow_dispatch:
+
+env:
+  AZURE_FUNCTIONAPP_NAME: helpdesk-functions
+  AZURE_FUNCTIONAPP_PACKAGE_PATH: functions/HelpDesk.Functions
+  DOTNET_VERSION: "10.0.x"
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET ${{ env.DOTNET_VERSION }}
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore dependencies
+        run: dotnet restore
+        working-directory: ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
+
+      - name: Build
+        run: dotnet build --configuration Release --no-restore
+        working-directory: ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
+
+      - name: Publish
+        run: dotnet publish --configuration Release --output ./publish --no-build
+        working-directory: ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
+
+      # Deploy to staging slot first, then swap to production
+      # This enables zero-downtime deployments
+      - name: Deploy to Azure Functions (staging slot)
+        uses: Azure/functions-action@v1
+        with:
+          app-name: ${{ env.AZURE_FUNCTIONAPP_NAME }}
+          package: ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}/publish
+          publish-profile: ${{ secrets.AZURE_FUNCTIONAPP_PUBLISH_PROFILE }}
+          slot-name: staging
+
+      - name: Swap staging to production
+        uses: Azure/cli@v2
+        with:
+          inlineScript: |
+            az functionapp deployment slot swap \
+              --resource-group helpdesk-rg \
+              --name ${{ env.AZURE_FUNCTIONAPP_NAME }} \
+              --slot staging \
+              --target-slot production

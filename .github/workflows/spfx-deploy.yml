@@ -1,0 +1,67 @@
+name: Build and Deploy SPFx
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "spfx/**"
+  workflow_dispatch:
+
+env:
+  SPFX_PATH: spfx/helpdesk-spfx
+  NODE_VERSION: "18.x"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+          cache-dependency-path: ${{ env.SPFX_PATH }}/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: ${{ env.SPFX_PATH }}
+
+      - name: Build solution
+        run: npx gulp bundle --ship
+        working-directory: ${{ env.SPFX_PATH }}
+
+      - name: Package solution
+        run: npx gulp package-solution --ship
+        working-directory: ${{ env.SPFX_PATH }}
+
+      - name: Upload .sppkg artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: spfx-package
+          path: ${{ env.SPFX_PATH }}/sharepoint/solution/*.sppkg
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Download .sppkg artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: spfx-package
+
+      # Deploy to SharePoint App Catalog using CLI for Microsoft 365
+      - name: Deploy to App Catalog
+        uses: pnp/action-cli-deploy@v5
+        with:
+          APP_FILE_PATH: "*.sppkg"
+          SITE_COLLECTION_URL: ${{ secrets.SP_APP_CATALOG_URL }}
+          SKIP_FEATURE_DEPLOYMENT: true
+        env:
+          ADMIN_USERNAME: ${{ secrets.SP_ADMIN_USERNAME }}
+          ADMIN_PASSWORD: ${{ secrets.SP_ADMIN_PASSWORD }}

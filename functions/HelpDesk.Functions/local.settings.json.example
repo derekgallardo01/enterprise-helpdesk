@@ -1,0 +1,13 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
+    "DataverseConnectionString": "AuthType=ClientSecret;Url=https://your-org.crm.dynamics.com;ClientId=YOUR_APP_ID;ClientSecret=YOUR_SECRET;",
+    "SqlConnectionString": "Server=your-server.database.windows.net;Database=helpdesk-reporting;Authentication=Active Directory Managed Identity;Encrypt=True;",
+    "AzureAd:TenantId": "YOUR_TENANT_ID",
+    "AzureAd:ClientId": "YOUR_CLIENT_ID",
+    "AzureAd:ClientSecret": "YOUR_CLIENT_SECRET",
+    "WebhookSecret": "YOUR_WEBHOOK_HMAC_SECRET"
+  }
+}
