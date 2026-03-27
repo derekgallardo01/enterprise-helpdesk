@@ -3,10 +3,13 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Graph;
 using Microsoft.Graph.Models;
+using Microsoft.Kiota.Abstractions.Serialization;
 using Azure.Identity;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Query;
 using HelpDesk.Functions.Services;
+
+using DataverseEntity = Microsoft.Xrm.Sdk.Entity;
 
 namespace HelpDesk.Functions.Functions;
 
@@ -68,17 +71,24 @@ public class GraphSyncUserProfiles
 
             allUsers.AddRange(usersResponse.Value);
 
-            // Handle pagination for >999 users using PageIterator
-            var pageIterator = PageIterator<User, UserCollectionResponse>.CreatePageIterator(
-                graphClient,
-                usersResponse,
-                user =>
-                {
-                    allUsers.Add(user);
-                    return true; // continue iteration
-                });
+            // Handle pagination for >999 users
+            var nextLink = usersResponse.OdataNextLink;
+            while (!string.IsNullOrEmpty(nextLink))
+            {
+                var nextPage = await graphClient.Users
+                    .WithUrl(nextLink)
+                    .GetAsync();
 
-            await pageIterator.IterateAsync();
+                if (nextPage?.Value is not null)
+                {
+                    allUsers.AddRange(nextPage.Value);
+                    nextLink = nextPage.OdataNextLink;
+                }
+                else
+                {
+                    break;
+                }
+            }
 
             _logger.LogInformation("Fetched {UserCount} users from Microsoft Graph", allUsers.Count);
 
@@ -149,7 +159,7 @@ public class GraphSyncUserProfiles
         else
         {
             // Create new department
-            var department = new Entity("hd_department")
+            var department = new DataverseEntity("hd_department")
             {
                 ["hd_name"] = departmentName
             };

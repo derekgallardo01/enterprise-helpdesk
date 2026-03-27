@@ -29,3 +29,7 @@ Thumbs.db
 *.pfx
 *.cer
 .env
+functions/publish-output/
+functions/deploy.zip
+functions/HelpDesk.Functions/body.json
+functions/HelpDesk.Functions/publish/

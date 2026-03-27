@@ -55,8 +55,9 @@ public class DataverseSyncService
     {
         _logger = logger;
         _dataverseService = dataverseService;
-        _sqlConnectionString = configuration["SqlConnectionString"]
-            ?? throw new InvalidOperationException("SqlConnectionString not configured");
+        _sqlConnectionString = configuration["SqlConnectionString"] ?? "";
+        if (string.IsNullOrEmpty(_sqlConnectionString))
+            logger.LogWarning("SqlConnectionString not configured — SQL sync will fail");
     }
 
     /// <summary>

@@ -85,17 +85,13 @@ CREATE TABLE dbo.TicketFact (
     DueDate                 DATETIME2           NULL,
     FirstResponseAt         DATETIME2           NULL,
 
-    -- Computed measures (calculated at write time for query performance)
+    -- Computed measures (calculated at query time)
     ResolutionMinutes       AS DATEDIFF(MINUTE, CreatedOn, ResolvedOn),
     FirstResponseMinutes    AS DATEDIFF(MINUTE, CreatedOn, FirstResponseAt),
-    IsOverdue               AS CASE
-                                WHEN DueDate < GETUTCDATE() AND Status NOT IN (6, 7, 8) THEN 1
-                                ELSE 0
-                            END,
 
-    -- Date keys for joining to DateDim
-    CreatedDateKey          AS CAST(FORMAT(CreatedOn, 'yyyyMMdd') AS INT) PERSISTED,
-    ResolvedDateKey         AS CAST(FORMAT(ResolvedOn, 'yyyyMMdd') AS INT) PERSISTED,
+    -- Date keys for joining to DateDim (deterministic formula, no FORMAT)
+    CreatedDateKey          AS (YEAR(CreatedOn) * 10000 + MONTH(CreatedOn) * 100 + DAY(CreatedOn)) PERSISTED,
+    ResolvedDateKey         AS (YEAR(ResolvedOn) * 10000 + MONTH(ResolvedOn) * 100 + DAY(ResolvedOn)),
 
     -- Sync metadata
     SyncedOn                DATETIME2           NOT NULL DEFAULT GETUTCDATE(),

@@ -14,7 +14,7 @@ namespace HelpDesk.Functions.Services;
 public class AIClassificationService
 {
     private readonly ILogger<AIClassificationService> _logger;
-    private readonly ChatClient _chatClient;
+    private readonly ChatClient? _chatClient;
 
     // Category taxonomy used in the classification system prompt
     private const string CategoryTaxonomy = """
@@ -31,17 +31,13 @@ public class AIClassificationService
         - Other: General Inquiry, Feedback, Training Request
         """;
 
-    private const string ClassificationSystemPrompt = $"""
-        You are an IT help desk ticket classifier. Given a ticket title and description,
-        classify it into the appropriate category and subcategory from the taxonomy below.
-        Also assign a priority (1=Critical, 2=High, 3=Medium, 4=Low) and a confidence
-        score between 0.0 and 1.0.
-
-        {CategoryTaxonomy}
-
-        Respond ONLY with valid JSON in this exact format:
-        {{"category": "string", "subcategory": "string", "priority": int, "confidence": float}}
-        """;
+    private static readonly string ClassificationSystemPrompt =
+        "You are an IT help desk ticket classifier. Given a ticket title and description, " +
+        "classify it into the appropriate category and subcategory from the taxonomy below. " +
+        "Also assign a priority (1=Critical, 2=High, 3=Medium, 4=Low) and a confidence " +
+        "score between 0.0 and 1.0.\n\n" +
+        CategoryTaxonomy + "\n\n" +
+        """Respond ONLY with valid JSON in this exact format: {"category": "string", "subcategory": "string", "priority": int, "confidence": float}""";
 
     private const string SuggestionSystemPrompt = """
         You are an expert IT help desk agent assistant. Given a ticket's title, description,
@@ -57,14 +53,19 @@ public class AIClassificationService
     {
         _logger = logger;
 
-        var endpoint = configuration["AzureOpenAI:Endpoint"]
-            ?? throw new InvalidOperationException("AzureOpenAI:Endpoint not configured");
-        var deploymentName = configuration["AzureOpenAI:DeploymentName"]
-            ?? throw new InvalidOperationException("AzureOpenAI:DeploymentName not configured");
+        var endpoint = configuration["AzureOpenAI:Endpoint"];
+        var deploymentName = configuration["AzureOpenAI:DeploymentName"];
 
-        var credential = new DefaultAzureCredential();
-        var azureClient = new AzureOpenAIClient(new Uri(endpoint), credential);
-        _chatClient = azureClient.GetChatClient(deploymentName);
+        if (!string.IsNullOrEmpty(endpoint) && !string.IsNullOrEmpty(deploymentName))
+        {
+            var credential = new DefaultAzureCredential();
+            var azureClient = new AzureOpenAIClient(new Uri(endpoint), credential);
+            _chatClient = azureClient.GetChatClient(deploymentName);
+        }
+        else
+        {
+            _logger.LogWarning("AzureOpenAI not configured — AI classification will return defaults");
+        }
     }
 
     /// <summary>
@@ -72,6 +73,9 @@ public class AIClassificationService
     /// </summary>
     public async Task<ClassificationResult> ClassifyTicketAsync(string title, string description)
     {
+        if (_chatClient is null)
+            return new ClassificationResult("Other", "General Inquiry", 3, 0.0);
+
         _logger.LogInformation("Classifying ticket: {Title}", title);
 
         var userMessage = $"Title: {title}\nDescription: {description}";
@@ -109,6 +113,9 @@ public class AIClassificationService
         string category,
         string[] comments)
     {
+        if (_chatClient is null)
+            return new SuggestionResult("AI service not configured.", []);
+
         _logger.LogInformation("Generating response suggestion for ticket: {Title}", title);
 
         var commentHistory = comments.Length > 0

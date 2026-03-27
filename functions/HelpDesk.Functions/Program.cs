@@ -1,14 +1,10 @@
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using HelpDesk.Functions.Middleware;
 using HelpDesk.Functions.Services;
 
 var host = new HostBuilder()
-    .ConfigureFunctionsWebApplication(worker =>
-    {
-        worker.UseMiddleware<ExceptionHandlingMiddleware>();
-    })
+    .ConfigureFunctionsWebApplication()
     .ConfigureServices(services =>
     {
         services.AddApplicationInsightsTelemetryWorkerService();

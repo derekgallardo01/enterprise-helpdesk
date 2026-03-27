@@ -17,12 +17,21 @@ public class DataverseService
     public DataverseService(IConfiguration configuration, ILogger<DataverseService> logger)
     {
         _logger = logger;
-        _connectionString = configuration["DataverseConnectionString"]
-            ?? throw new InvalidOperationException("DataverseConnectionString not configured");
+        _connectionString = configuration["DataverseConnectionString"] ?? "";
+
+        if (string.IsNullOrEmpty(_connectionString))
+        {
+            _logger.LogWarning("DataverseConnectionString not configured — Dataverse calls will fail");
+        }
     }
 
     public ServiceClient GetClient()
     {
+        if (string.IsNullOrEmpty(_connectionString))
+        {
+            throw new InvalidOperationException("DataverseConnectionString not configured");
+        }
+
         if (_client is null || !_client.IsReady)
         {
             _logger.LogInformation("Initializing Dataverse ServiceClient (S2S authentication)");

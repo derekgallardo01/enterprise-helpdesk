@@ -31,8 +31,7 @@ public class WebhookReceiver
     {
         _dataverseService = dataverseService;
         _logger = logger;
-        _webhookSecret = configuration["WebhookSecret"]
-            ?? throw new InvalidOperationException("WebhookSecret not configured");
+        _webhookSecret = configuration["WebhookSecret"] ?? "not-configured";
     }
 
     [Function("WebhookReceiver")]

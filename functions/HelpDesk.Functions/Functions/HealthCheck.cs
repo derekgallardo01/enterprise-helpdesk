@@ -5,7 +5,7 @@ using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using Microsoft.Xrm.Sdk.Messages;
+using Microsoft.Crm.Sdk.Messages;
 using HelpDesk.Functions.Services;
 
 namespace HelpDesk.Functions.Functions;
@@ -27,8 +27,7 @@ public class HealthCheck
     {
         _dataverseService = dataverseService;
         _logger = logger;
-        _sqlConnectionString = configuration["SqlConnectionString"]
-            ?? throw new InvalidOperationException("SqlConnectionString not configured");
+        _sqlConnectionString = configuration["SqlConnectionString"] ?? "";
     }
 
     [Function("HealthCheck")]
