@@ -20,8 +20,8 @@
       "description": { "default": "Search knowledge base articles via Microsoft Graph" },
       "officeFabricIconFontName": "Search",
       "properties": {
-        "kbSiteUrl": "",
-        "dataverseUrl": ""
+        "kbSiteUrl": "https://musicgenie.sharepoint.com/sites/ITHelpDeskKB",
+        "dataverseUrl": "https://orgfda62156.crm.dynamics.com"
       }
     }
   ]

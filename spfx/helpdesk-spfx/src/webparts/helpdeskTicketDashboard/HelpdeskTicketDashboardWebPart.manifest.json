@@ -20,7 +20,7 @@
       "description": { "default": "Displays and manages help desk tickets from Dataverse" },
       "officeFabricIconFontName": "Ticket",
       "properties": {
-        "dataverseUrl": "",
+        "dataverseUrl": "https://orgfda62156.crm.dynamics.com",
         "maxTickets": 50
       }
     }
