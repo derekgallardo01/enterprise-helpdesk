@@ -25,6 +25,7 @@
     "tslib": "^2.6.3"
   },
   "devDependencies": {
+    "@microsoft/rush-stack-compiler-4.7": "^0.1.1",
     "@microsoft/sp-build-web": "1.22.2",
     "@microsoft/sp-module-interfaces": "1.22.2",
     "@types/jest": "^29.5.12",
