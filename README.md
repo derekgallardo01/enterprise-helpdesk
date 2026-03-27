@@ -2,6 +2,21 @@
 
 A production-grade IT help desk system built across the full Microsoft stack — Power Apps, SharePoint Online, SPFx, Azure Functions, Dataverse, Power Automate, Power BI, and Copilot Studio.
 
+## Live Environment
+
+| Component | Status | URL / Details |
+|-----------|--------|---------------|
+| Azure Functions (7 endpoints) | Live | `helpdesk-func-dev-z3fneilrvkquu.azurewebsites.net` |
+| Health Check | `{"status":"healthy","dataverse":true,"sql":true}` | `/api/healthcheck` |
+| Azure SQL (star schema) | Live | `helpdesk-sql-dev-z3fneilrvkquu.database.windows.net` |
+| Dataverse (8 tables, 25 tickets) | Live | `org2d0673ab.crm.dynamics.com` |
+| Model-Driven App (Agent Console) | Live | IT Help Desk - Agent Console |
+| Power Automate (Ticket Routing) | Active | Triggers on new ticket creation |
+| Power BI (DirectQuery) | Connected | HelpDesk-Reports.pbix |
+| SPFx Package | Built | `helpdesk-spfx.sppkg` (207 KB) |
+| Key Vault | Live | `helpdeskkvdevz3fnei.vault.azure.net` |
+| Application Insights | Live | `helpdesk-ai-dev` |
+
 ## Architecture
 
 ```
@@ -97,13 +112,13 @@ Phase 10 (UAT Pilot & Rollout) ── real users, measured go-live
 
 | Phase | What | Hours | Status |
 |---|---|---|---|
-| 0 | Prerequisites + Infrastructure-as-Code | 4 | Built (Bicep templates) |
-| 1 | Dataverse Schema + Model-Driven App | 10 | Documented (seed data, solution scaffold) |
-| 2 | Power Automate Workflows | 7 | Documented (flow definitions) |
+| 0 | Prerequisites + Infrastructure-as-Code | 4 | **Deployed** (Bicep → 9 Azure resources in centralus) |
+| 1 | Dataverse Schema + Model-Driven App | 10 | **Deployed** (8 tables, 25 tickets, agent console live) |
+| 2 | Power Automate Workflows | 7 | **Created** (Ticket Routing flow in Power Automate) |
 | 3 | Canvas App (Self-Service Portal) | 9 | Documented (screen specs) |
-| 4 | SPFx Web Parts (SharePoint Portal) | 14 | **Built** (React components, DataGrid, KB Search, ACE) |
-| 5 | Azure Functions + Azure SQL | 9 | **Built** (sync, webhooks, AI classification, health check) |
-| 6 | Power BI Reports | 7 | Built (PBIP project, semantic model, DAX measures) |
+| 4 | SPFx Web Parts (SharePoint Portal) | 14 | **Built** (React components, .sppkg packaged, needs SPO license) |
+| 5 | Azure Functions + Azure SQL | 9 | **Deployed** (7 functions live, health check green, SQL + Dataverse connected) |
+| 6 | Power BI Reports | 7 | **Connected** (DirectQuery to Azure SQL, .pbix created) |
 | 7 | Copilot Studio + AI | 7 | Documented (topic definitions, prompt templates) |
 | 8 | Operational Readiness | 12 | **Built** (DR, monitoring, runbooks, deployment guide, GDPR, IaC) |
 | 9 | Testing & Hardening | 10 | **Built** (xUnit tests, k6 scripts, security tests, seed data) |

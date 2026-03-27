@@ -5,11 +5,9 @@
       "report": {
         "path": "HelpDesk-Reports.Report"
       }
-    },
-    {
-      "dataset": {
-        "path": "HelpDesk-Reports.Dataset"
-      }
     }
-  ]
+  ],
+  "settings": {
+    "enableAutoRecovery": true
+  }
 }

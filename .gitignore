@@ -36,3 +36,10 @@ functions/HelpDesk.Functions/publish/
 spfx/helpdesk-spfx/body-openai.json
 body*.json
 scripts/seed-tickets.py
+functions/deploy-*.zip
+functions/deploy-out/
+functions/publish-*/
+spfx/helpdesk-spfx/release/
+spfx/helpdesk-spfx/sharepoint/
+*.pbix
+.claude/
