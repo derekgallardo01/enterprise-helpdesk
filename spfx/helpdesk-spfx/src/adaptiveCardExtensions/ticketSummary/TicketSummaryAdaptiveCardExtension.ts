@@ -48,7 +48,7 @@ export default class TicketSummaryAdaptiveCardExtension extends BaseAdaptiveCard
     return 'Help Desk Tickets';
   }
 
-  protected get iconProperty(): string {
+  public get iconProperty(): string {
     return 'Ticket';
   }
 

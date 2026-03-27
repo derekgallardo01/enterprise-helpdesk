@@ -33,3 +33,5 @@ functions/publish-output/
 functions/deploy.zip
 functions/HelpDesk.Functions/body.json
 functions/HelpDesk.Functions/publish/
+spfx/helpdesk-spfx/body-openai.json
+body*.json

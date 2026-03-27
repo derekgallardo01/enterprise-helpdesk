@@ -1,7 +1,6 @@
 import {
   BaseAdaptiveCardQuickView,
-  IAdaptiveCard,
-  IExternalLinkCardAction,
+  ISPFxAdaptiveCard,
 } from '@microsoft/sp-adaptive-card-extension-base';
 import {
   ITicketSummaryState,
@@ -29,7 +28,7 @@ export class QuickView extends BaseAdaptiveCardQuickView<
     };
   }
 
-  public get template(): IAdaptiveCard {
+  public get template(): ISPFxAdaptiveCard {
     return {
       $schema: 'http://adaptivecards.io/schemas/adaptive-card.json',
       type: 'AdaptiveCard',
@@ -114,6 +113,6 @@ export class QuickView extends BaseAdaptiveCardQuickView<
           url: '${dashboardUrl}',
         },
       ],
-    } as IAdaptiveCard;
+    } as unknown as ISPFxAdaptiveCard;
   }
 }

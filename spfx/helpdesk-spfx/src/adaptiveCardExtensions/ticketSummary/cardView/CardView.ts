@@ -1,8 +1,7 @@
 import {
   BasePrimaryTextCardView,
   IPrimaryTextCardParameters,
-  IExternalLinkCardAction,
-  IQuickViewCardAction,
+  ICardButton,
 } from '@microsoft/sp-adaptive-card-extension-base';
 import {
   ITicketSummaryState,
@@ -38,7 +37,7 @@ export class CardView extends BasePrimaryTextCardView<
     };
   }
 
-  public get cardButtons(): (IExternalLinkCardAction | IQuickViewCardAction)[] {
+  public get cardButtons(): [ICardButton] {
     return [
       {
         title: 'View Details',
