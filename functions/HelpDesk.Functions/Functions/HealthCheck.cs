@@ -38,6 +38,8 @@ public class HealthCheck
 
         var dataverseHealthy = false;
         var sqlHealthy = false;
+        string? dataverseError = null;
+        string? sqlError = null;
 
         // Check Dataverse connectivity
         try
@@ -48,6 +50,7 @@ public class HealthCheck
         }
         catch (Exception ex)
         {
+            dataverseError = ex.Message;
             _logger.LogWarning(ex, "Dataverse health check failed");
         }
 
@@ -62,17 +65,23 @@ public class HealthCheck
         }
         catch (Exception ex)
         {
+            sqlError = ex.Message;
             _logger.LogWarning(ex, "SQL health check failed");
         }
 
-        var overallStatus = dataverseHealthy && sqlHealthy ? "healthy" : "degraded";
+        // Dataverse not configured is expected in dev — don't count it against health
+        var dataverseConfigured = !string.IsNullOrEmpty(_dataverseService.ConnectionString);
+        var overallStatus = sqlHealthy && (dataverseHealthy || !dataverseConfigured) ? "healthy" : "degraded";
         var statusCode = overallStatus == "healthy" ? HttpStatusCode.OK : HttpStatusCode.ServiceUnavailable;
 
         var result = new
         {
             status = overallStatus,
             dataverse = dataverseHealthy,
+            dataverseConfigured,
+            dataverseError,
             sql = sqlHealthy,
+            sqlError,
             timestamp = DateTime.UtcNow
         };
 

@@ -12,6 +12,7 @@ public class DataverseService
 {
     private readonly ILogger<DataverseService> _logger;
     private readonly string _connectionString;
+    public string ConnectionString => _connectionString;
     private ServiceClient? _client;
 
     public DataverseService(IConfiguration configuration, ILogger<DataverseService> logger)
