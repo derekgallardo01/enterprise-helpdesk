@@ -30,6 +30,21 @@ jobs:
         run: npm ci
         working-directory: ${{ env.SPFX_PATH }}
 
+      - name: Run linter
+        run: npx tsc --noEmit
+        working-directory: ${{ env.SPFX_PATH }}
+
+      - name: Run unit tests
+        run: npm test -- --ci --coverage
+        working-directory: ${{ env.SPFX_PATH }}
+
+      - name: Upload test coverage
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-report
+          path: ${{ env.SPFX_PATH }}/coverage/
+
       - name: Build solution
         run: npx gulp bundle --ship
         working-directory: ${{ env.SPFX_PATH }}
@@ -56,12 +71,18 @@ jobs:
           name: spfx-package
 
       # Deploy to SharePoint App Catalog using CLI for Microsoft 365
+      # Uses certificate-based auth (not username/password) for security
+      - name: Login to Microsoft 365
+        uses: pnp/action-cli-login@v3
+        with:
+          CERTIFICATE_ENCODED: ${{ secrets.SP_CERTIFICATE_ENCODED }}
+          CERTIFICATE_PASSWORD: ${{ secrets.SP_CERTIFICATE_PASSWORD }}
+          APP_ID: ${{ secrets.SP_APP_ID }}
+          TENANT: ${{ secrets.SP_TENANT_ID }}
+
       - name: Deploy to App Catalog
         uses: pnp/action-cli-deploy@v5
         with:
           APP_FILE_PATH: "*.sppkg"
           SITE_COLLECTION_URL: ${{ secrets.SP_APP_CATALOG_URL }}
           SKIP_FEATURE_DEPLOYMENT: true
-        env:
-          ADMIN_USERNAME: ${{ secrets.SP_ADMIN_USERNAME }}
-          ADMIN_PASSWORD: ${{ secrets.SP_ADMIN_PASSWORD }}

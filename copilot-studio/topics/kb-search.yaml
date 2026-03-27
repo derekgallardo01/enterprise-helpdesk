@@ -1,0 +1,202 @@
+kind: AdaptiveDialog
+name: kb-search
+displayName: Knowledge Base Search
+description: >
+  Searches the IT knowledge base for answers to common questions. Uses
+  Copilot Studio generative answers grounded on the SharePoint KB site.
+  Falls back to offering ticket creation if no useful answer is found.
+
+triggerPhrases:
+  - "How do I"
+  - "Search the knowledge base"
+  - "Help me with"
+  - "Is there an article about"
+  - "I need instructions for"
+  - "Troubleshoot"
+  - "How to reset my password"
+  - "VPN setup guide"
+  - "Connect to Wi-Fi"
+
+variables:
+  - name: varSearchQuery
+    type: String
+    description: The user's search query or question
+  - name: varGenerativeAnswerProvided
+    type: Boolean
+    description: Whether generative answers returned a confident response
+  - name: varKBArticles
+    type: Table
+    description: Matching KB article references from Dataverse
+  - name: varArticleCount
+    type: Number
+    description: Number of matching KB articles found
+  - name: varWasHelpful
+    type: String
+    description: User feedback on whether the answer was helpful
+
+actions:
+  # Step 1: Capture search query (may already be in trigger phrase)
+  - kind: Condition
+    condition: "=length(Activity.Text) > 20"
+    actions:
+      # The trigger phrase itself likely contains the question
+      - kind: SetVariable
+        variable: varSearchQuery
+        value: "=Activity.Text"
+    elseActions:
+      - kind: AskQuestion
+        question: "What are you looking for help with?"
+        variable: varSearchQuery
+
+  # Step 2: Attempt generative answers (grounded on SharePoint KB)
+  - kind: GenerativeAnswer
+    description: >
+      Uses Copilot Studio generative answers capability grounded on the
+      SharePoint knowledge base site. The system searches indexed SharePoint
+      pages and generates a natural language answer with citations.
+    dataSources:
+      - kind: SharePoint
+        siteUrl: "{System.EnvironmentVariable.hd_SharePointKBSiteUrl}"
+    input: "=varSearchQuery"
+    moderationLevel: Medium
+    outputVariable: varGenerativeResponse
+    confidenceVariable: varGenerativeConfidence
+    citationsVariable: varCitations
+
+  # Step 3: Check if generative answer was confident
+  - kind: Condition
+    condition: "=varGenerativeConfidence >= 0.6"
+    actions:
+      # Good answer -- present it
+      - kind: SendMessage
+        message: "{varGenerativeResponse}"
+
+      # Show source citations if available
+      - kind: Condition
+        condition: "=count(varCitations) > 0"
+        actions:
+          - kind: SendMessage
+            message: |
+              **Sources:**
+              {forEach(varCitations, '- [' & item.title & '](' & item.url & ')')}
+
+      # Increment view counts for cited articles
+      - kind: InvokeFlowAction
+        flowName: HD - Increment KB View Counts
+        inputs:
+          citationUrls: "=varCitations"
+
+      # Ask for feedback
+      - kind: AskQuestion
+        question: "Was this helpful?"
+        variable: varWasHelpful
+        choices:
+          - "Yes, this solved my issue"
+          - "Partially helpful"
+          - "No, I still need help"
+
+      - kind: Condition
+        condition: "=varWasHelpful = 'Yes, this solved my issue'"
+        actions:
+          - kind: InvokeFlowAction
+            flowName: HD - Increment KB Helpful Counts
+            inputs:
+              citationUrls: "=varCitations"
+          - kind: SendMessage
+            message: "Great! Glad I could help. Let me know if you need anything else."
+          - kind: EndDialog
+
+      - kind: Condition
+        condition: "=varWasHelpful = 'No, I still need help'"
+        actions:
+          - kind: SendMessage
+            message: "I am sorry that did not resolve your issue. Let me check for more specific articles."
+          # Fall through to Dataverse KB search below
+
+    elseActions:
+      # Low confidence -- inform user
+      - kind: SendMessage
+        message: "I could not find a definitive answer in our knowledge base. Let me search for related articles."
+
+  # Step 4: Fallback -- search Dataverse KB article index
+  - kind: InvokeFlowAction
+    flowName: HD - Search KB Articles
+    description: >
+      Searches the hd_kbarticleref table in Dataverse for articles matching
+      the user's query. Returns up to 5 results sorted by relevance and
+      view count.
+    inputs:
+      query: "=varSearchQuery"
+    outputs:
+      - name: articles
+        variable: varKBArticles
+      - name: count
+        variable: varArticleCount
+
+  - kind: Condition
+    condition: "=varArticleCount > 0"
+    actions:
+      - kind: SendMessage
+        message: "I found {varArticleCount} related article(s) that might help:"
+
+      - kind: SendAdaptiveCard
+        card:
+          type: AdaptiveCard
+          version: "1.5"
+          body:
+            - type: TextBlock
+              text: "Knowledge Base Articles"
+              weight: Bolder
+              size: Medium
+            - type: Container
+              items: "=forEach(varKBArticles, articleCardItem)"
+          # Each article rendered as:
+          # - Title (hyperlink to SharePoint URL)
+          # - Category badge
+          # - View count and helpful count
+
+      - kind: AskQuestion
+        question: "Did any of these articles help resolve your issue?"
+        variable: varArticlesHelpful
+        choices:
+          - "Yes, problem solved"
+          - "No, I need to create a ticket"
+
+      - kind: Condition
+        condition: "=varArticlesHelpful = 'No, I need to create a ticket'"
+        actions:
+          - kind: SendMessage
+            message: "No problem. Let me help you create a support ticket."
+          - kind: RedirectToTopic
+            topicName: create-ticket
+        elseActions:
+          - kind: SendMessage
+            message: "Glad I could help! Let me know if you need anything else."
+          - kind: EndDialog
+
+    elseActions:
+      # No KB articles found at all
+      - kind: SendMessage
+        message: >
+          I was not able to find any knowledge base articles matching your
+          question. Would you like me to create a support ticket so our IT
+          team can help you directly?
+
+      - kind: AskQuestion
+        question: "Create a support ticket?"
+        variable: varCreateTicket
+        choices:
+          - "Yes, create a ticket"
+          - "No thanks"
+
+      - kind: Condition
+        condition: "=varCreateTicket = 'Yes, create a ticket'"
+        actions:
+          - kind: RedirectToTopic
+            topicName: create-ticket
+        elseActions:
+          - kind: SendMessage
+            message: >
+              No problem. You can also reach our IT support team at
+              helpdesk@contoso.com or call ext. 4357.
+          - kind: EndDialog

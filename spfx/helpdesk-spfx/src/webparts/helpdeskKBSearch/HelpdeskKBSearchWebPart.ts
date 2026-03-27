@@ -1,7 +1,7 @@
 import * as React from "react";
 import * as ReactDom from "react-dom";
 import { Version } from "@microsoft/sp-core-library";
-import { MSGraphClientV3 } from "@microsoft/sp-http";
+import { AadHttpClient, MSGraphClientV3 } from "@microsoft/sp-http";
 import {
   type IPropertyPaneConfiguration,
   PropertyPaneTextField,
@@ -31,28 +31,29 @@ export interface IHelpdeskKBSearchWebPartProps {
 
 export default class HelpdeskKBSearchWebPart extends BaseClientSideWebPart<IHelpdeskKBSearchWebPartProps> {
   private _graphClient!: MSGraphClientV3;
+  private _aadClient!: AadHttpClient;
 
   protected async onInit(): Promise<void> {
     this._graphClient = await this.context.msGraphClientFactory.getClient("3");
+
+    // AadHttpClient for Dataverse feedback tracking (hd_kbarticlerefs)
+    if (this.properties.dataverseUrl) {
+      this._aadClient = await this.context.aadHttpClientFactory.getClient(
+        this.properties.dataverseUrl
+      );
+    }
+
     return super.onInit();
   }
 
   public render(): void {
-    // TODO: Replace with actual React KBSearch component once built
-    const element = React.createElement("div", {}, [
-      React.createElement("h2", { key: "title" }, "Knowledge Base Search"),
-      React.createElement("input", {
-        key: "search",
-        type: "text",
-        placeholder: "Search the knowledge base...",
-        style: { width: "100%", padding: "8px", fontSize: "14px" },
-      }),
-      React.createElement(
-        "p",
-        { key: "status" },
-        `Searching: ${this.properties.kbSiteUrl}`
-      ),
-    ]);
+    const { KBSearch } = require('./components/KBSearch');
+    const element = React.createElement(KBSearch, {
+      graphClient: this._graphClient,
+      kbSiteUrl: this.properties.kbSiteUrl,
+      dataverseUrl: this.properties.dataverseUrl,
+      aadClient: this._aadClient,
+    });
 
     ReactDom.render(element, this.domElement);
   }

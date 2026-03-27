@@ -1,0 +1,226 @@
+kind: AdaptiveDialog
+name: check-status
+displayName: Check Ticket Status
+description: >
+  Allows users to look up the current status of an existing help desk ticket
+  by providing the ticket number. Displays an adaptive card with ticket details.
+
+triggerPhrases:
+  - "Check ticket status"
+  - "What is the status of my ticket"
+  - "Where is my ticket"
+  - "Ticket update"
+  - "Check on TKT-"
+  - "Look up a ticket"
+  - "Has my issue been resolved"
+  - "Any update on my request"
+
+variables:
+  - name: varTicketNumber
+    type: String
+    description: "Ticket number in format TKT-NNNNNN"
+  - name: varTicketFound
+    type: Boolean
+    description: Whether the ticket was found in Dataverse
+  - name: varTicketTitle
+    type: String
+    description: Ticket title from Dataverse
+  - name: varTicketStatus
+    type: String
+    description: Current status label
+  - name: varTicketPriority
+    type: String
+    description: Priority label
+  - name: varTicketCategory
+    type: String
+    description: Category name
+  - name: varTicketAssignedTo
+    type: String
+    description: Assigned agent display name
+  - name: varTicketCreatedOn
+    type: String
+    description: Creation timestamp
+  - name: varTicketDueDate
+    type: String
+    description: SLA due date
+  - name: varTicketLastComment
+    type: String
+    description: Most recent public comment body
+  - name: varTicketLastCommentDate
+    type: String
+    description: Most recent public comment timestamp
+  - name: varTicketDeepLink
+    type: String
+    description: URL to the ticket in the self-service portal
+
+actions:
+  # Step 1: Check if ticket number was provided in trigger phrase
+  - kind: Condition
+    condition: "=contains(Activity.Text, 'TKT-')"
+    actions:
+      # Extract ticket number using regex-like pattern matching
+      - kind: InvokeFlowAction
+        flowName: HD - Extract Ticket Number
+        description: Extracts TKT-NNNNNN pattern from the user's message.
+        inputs:
+          message: "=Activity.Text"
+        outputs:
+          - name: ticketNumber
+            variable: varTicketNumber
+    elseActions: []
+
+  # Step 2: Ask for ticket number if not detected
+  - kind: Condition
+    condition: "=isBlank(varTicketNumber)"
+    actions:
+      - kind: AskQuestion
+        question: >
+          What is your ticket number? It starts with "TKT-" followed by
+          six digits (for example, TKT-000042).
+        variable: varTicketNumber
+        validation:
+          type: String
+          pattern: "^TKT-\\d{6}$"
+          errorMessage: >
+            That does not look like a valid ticket number. Please enter it
+            in the format TKT-000000 (for example, TKT-000042).
+          maxRetries: 2
+          retryExceededMessage: >
+            I am having trouble recognizing that ticket number. You can also
+            check your ticket at the Help Desk Portal.
+    elseActions: []
+
+  # Step 3: Query Dataverse for the ticket
+  - kind: InvokeFlowAction
+    flowName: HD - Get Ticket By Number
+    description: >
+      Queries Dataverse for the ticket matching the provided number.
+      Only returns the ticket if the calling user is the requester
+      (security scoping enforced in the flow).
+    inputs:
+      ticketNumber: "=varTicketNumber"
+      callerId: "=System.User.Id"
+    outputs:
+      - name: found
+        variable: varTicketFound
+      - name: title
+        variable: varTicketTitle
+      - name: status
+        variable: varTicketStatus
+      - name: priority
+        variable: varTicketPriority
+      - name: category
+        variable: varTicketCategory
+      - name: assignedTo
+        variable: varTicketAssignedTo
+      - name: createdOn
+        variable: varTicketCreatedOn
+      - name: dueDate
+        variable: varTicketDueDate
+      - name: lastComment
+        variable: varTicketLastComment
+      - name: lastCommentDate
+        variable: varTicketLastCommentDate
+      - name: deepLink
+        variable: varTicketDeepLink
+
+  # Step 4: Handle not found
+  - kind: Condition
+    condition: "=varTicketFound = false"
+    actions:
+      - kind: SendMessage
+        message: >
+          I could not find ticket **{varTicketNumber}**. This could mean the
+          ticket number is incorrect or you do not have permission to view it.
+          Please double-check the number and try again.
+      - kind: AskQuestion
+        question: "Would you like to try a different ticket number?"
+        variable: varRetry
+        choices:
+          - "Yes"
+          - "No"
+      - kind: Condition
+        condition: "=varRetry = 'Yes'"
+        actions:
+          - kind: SetVariable
+            variable: varTicketNumber
+            value: ""
+          - kind: GotoAction
+            target: step2
+        elseActions:
+          - kind: EndDialog
+    elseActions: []
+
+  # Step 5: Display ticket details as adaptive card
+  - kind: SendAdaptiveCard
+    card:
+      type: AdaptiveCard
+      version: "1.5"
+      body:
+        - type: TextBlock
+          text: "Ticket Details"
+          weight: Bolder
+          size: Large
+        - type: FactSet
+          facts:
+            - title: "Ticket #"
+              value: "{varTicketNumber}"
+            - title: "Title"
+              value: "{varTicketTitle}"
+            - title: "Status"
+              value: "{varTicketStatus}"
+            - title: "Priority"
+              value: "{varTicketPriority}"
+            - title: "Category"
+              value: "{varTicketCategory}"
+            - title: "Assigned To"
+              value: "{varTicketAssignedTo}"
+            - title: "Created"
+              value: "{varTicketCreatedOn}"
+            - title: "Due Date"
+              value: "{varTicketDueDate}"
+        - type: TextBlock
+          text: "Latest Update"
+          weight: Bolder
+          size: Medium
+          separator: true
+          spacing: Medium
+        - type: TextBlock
+          text: "{varTicketLastComment}"
+          wrap: true
+          isSubtle: true
+        - type: TextBlock
+          text: "{varTicketLastCommentDate}"
+          size: Small
+          isSubtle: true
+      actions:
+        - type: Action.OpenUrl
+          title: "View Full Ticket"
+          url: "{varTicketDeepLink}"
+        - type: Action.Submit
+          title: "Add a Comment"
+          data:
+            action: addComment
+            ticketNumber: "{varTicketNumber}"
+
+  # Step 6: Handle adaptive card action (Add Comment)
+  - kind: Condition
+    condition: "=Activity.Value.action = 'addComment'"
+    actions:
+      - kind: AskQuestion
+        question: "What would you like to add to ticket {varTicketNumber}?"
+        variable: varNewComment
+      - kind: InvokeFlowAction
+        flowName: HD - Add Comment From Bot
+        inputs:
+          ticketNumber: "=varTicketNumber"
+          commentBody: "=varNewComment"
+          commentType: 1
+      - kind: SendMessage
+        message: "Your comment has been added to ticket {varTicketNumber}."
+    elseActions: []
+
+  - kind: SendMessage
+    message: "Is there anything else I can help you with?"
+
+  - kind: EndDialog

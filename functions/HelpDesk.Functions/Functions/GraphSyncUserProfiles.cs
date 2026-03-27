@@ -2,7 +2,11 @@ using Microsoft.Azure.Functions.Worker;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Graph;
+using Microsoft.Graph.Models;
 using Azure.Identity;
+using Microsoft.Xrm.Sdk;
+using Microsoft.Xrm.Sdk.Query;
+using HelpDesk.Functions.Services;
 
 namespace HelpDesk.Functions.Functions;
 
@@ -17,10 +21,15 @@ public class GraphSyncUserProfiles
 {
     private readonly ILogger<GraphSyncUserProfiles> _logger;
     private readonly IConfiguration _configuration;
+    private readonly DataverseService _dataverseService;
 
-    public GraphSyncUserProfiles(IConfiguration configuration, ILogger<GraphSyncUserProfiles> logger)
+    public GraphSyncUserProfiles(
+        IConfiguration configuration,
+        DataverseService dataverseService,
+        ILogger<GraphSyncUserProfiles> logger)
     {
         _configuration = configuration;
+        _dataverseService = dataverseService;
         _logger = logger;
     }
 
@@ -29,20 +38,17 @@ public class GraphSyncUserProfiles
     {
         _logger.LogInformation("Starting Microsoft Graph user profile sync at {Time}", DateTime.UtcNow);
 
-        var tenantId = _configuration["AzureAd:TenantId"];
-        var clientId = _configuration["AzureAd:ClientId"];
-        var clientSecret = _configuration["AzureAd:ClientSecret"];
-
-        var credential = new ClientSecretCredential(tenantId, clientId, clientSecret);
+        // Use DefaultAzureCredential for managed identity (no client secrets in config)
+        var credential = new DefaultAzureCredential();
         var graphClient = new GraphServiceClient(credential);
 
         var syncedCount = 0;
+        var allUsers = new List<User>();
 
         try
         {
-            // Fetch all users with relevant properties
-            // Handles Graph pagination automatically (100 users per page)
-            var users = await graphClient.Users
+            // Fetch first page of users
+            var usersResponse = await graphClient.Users
                 .GetAsync(config =>
                 {
                     config.QueryParameters.Select = new[]
@@ -54,21 +60,59 @@ public class GraphSyncUserProfiles
                     config.QueryParameters.Top = 999;
                 });
 
-            if (users?.Value is null)
+            if (usersResponse?.Value is null)
             {
                 _logger.LogWarning("No users returned from Microsoft Graph");
                 return;
             }
 
-            foreach (var user in users.Value)
+            allUsers.AddRange(usersResponse.Value);
+
+            // Handle pagination for >999 users using PageIterator
+            var pageIterator = PageIterator<User, UserCollectionResponse>.CreatePageIterator(
+                graphClient,
+                usersResponse,
+                user =>
+                {
+                    allUsers.Add(user);
+                    return true; // continue iteration
+                });
+
+            await pageIterator.IterateAsync();
+
+            _logger.LogInformation("Fetched {UserCount} users from Microsoft Graph", allUsers.Count);
+
+            // Collect unique department names and sync to Dataverse
+            var departments = allUsers
+                .Where(u => !string.IsNullOrWhiteSpace(u.Department))
+                .Select(u => u.Department!)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            _logger.LogInformation("Found {DepartmentCount} unique departments", departments.Count);
+
+            var client = _dataverseService.GetClient();
+
+            // Upsert each department to Dataverse hd_department
+            foreach (var departmentName in departments)
+            {
+                try
+                {
+                    UpsertDepartment(client, departmentName);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Failed to upsert department: {DepartmentName}", departmentName);
+                }
+            }
+
+            // Log synced users
+            foreach (var user in allUsers)
             {
                 _logger.LogDebug("Synced user: {DisplayName} ({Department})",
                     user.DisplayName, user.Department);
                 syncedCount++;
             }
-
-            // TODO: Upsert department records to hd_Department table in Dataverse
-            // TODO: Update systemuser metadata with department/title from Graph
         }
         catch (Exception ex)
         {
@@ -77,5 +121,40 @@ public class GraphSyncUserProfiles
         }
 
         _logger.LogInformation("Graph user profile sync complete. Synced {Count} users", syncedCount);
+    }
+
+    /// <summary>
+    /// Queries Dataverse for an hd_department by name. Creates if not found, updates if found.
+    /// </summary>
+    private void UpsertDepartment(Microsoft.PowerPlatform.Dataverse.Client.ServiceClient client, string departmentName)
+    {
+        var query = new QueryExpression("hd_department")
+        {
+            ColumnSet = new ColumnSet("hd_departmentid", "hd_name"),
+            Criteria = new FilterExpression()
+        };
+        query.Criteria.AddCondition("hd_name", ConditionOperator.Equal, departmentName);
+        query.TopCount = 1;
+
+        var results = client.RetrieveMultiple(query);
+        var existing = results.Entities.FirstOrDefault();
+
+        if (existing is not null)
+        {
+            // Update existing department (touch the record to mark it as current)
+            existing["hd_name"] = departmentName;
+            client.Update(existing);
+            _logger.LogDebug("Updated department: {DepartmentName}", departmentName);
+        }
+        else
+        {
+            // Create new department
+            var department = new Entity("hd_department")
+            {
+                ["hd_name"] = departmentName
+            };
+            client.Create(department);
+            _logger.LogInformation("Created department: {DepartmentName}", departmentName);
+        }
     }
 }

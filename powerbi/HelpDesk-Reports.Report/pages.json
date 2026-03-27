@@ -1,0 +1,376 @@
+{
+  "version": "1.0",
+  "pages": [
+    {
+      "name": "TicketVolumeDashboard",
+      "displayName": "Ticket Volume Dashboard",
+      "displayOption": "FitToPage",
+      "width": 1280,
+      "height": 720,
+      "visuals": [
+        {
+          "title": "Total Tickets",
+          "type": "card",
+          "position": { "x": 0, "y": 0, "width": 213, "height": 120 },
+          "measure": "_Measures[Total Tickets]",
+          "description": "KPI card showing total ticket count for the selected date range."
+        },
+        {
+          "title": "Open Tickets",
+          "type": "card",
+          "position": { "x": 213, "y": 0, "width": 213, "height": 120 },
+          "measure": "_Measures[Open Tickets]",
+          "description": "KPI card showing tickets in active statuses (New through Waiting on Third Party)."
+        },
+        {
+          "title": "Resolved Tickets",
+          "type": "card",
+          "position": { "x": 426, "y": 0, "width": 213, "height": 120 },
+          "measure": "_Measures[Resolved Tickets]",
+          "description": "KPI card showing resolved ticket count."
+        },
+        {
+          "title": "Avg Resolution Hours",
+          "type": "card",
+          "position": { "x": 639, "y": 0, "width": 213, "height": 120 },
+          "measure": "_Measures[Avg Resolution Hours]",
+          "description": "KPI card showing mean time to resolution in hours."
+        },
+        {
+          "title": "SLA Compliance %",
+          "type": "card",
+          "position": { "x": 852, "y": 0, "width": 213, "height": 120 },
+          "measure": "_Measures[SLA Compliance %]",
+          "description": "KPI card showing percentage of tickets resolved within SLA."
+        },
+        {
+          "title": "Avg Satisfaction",
+          "type": "card",
+          "position": { "x": 1065, "y": 0, "width": 215, "height": 120 },
+          "measure": "_Measures[Avg Satisfaction]",
+          "description": "KPI card showing average CSAT rating (1-5 scale)."
+        },
+        {
+          "title": "Ticket Volume Trend",
+          "type": "lineChart",
+          "position": { "x": 0, "y": 130, "width": 640, "height": 280 },
+          "axis": "DateDim[FullDate]",
+          "values": ["TicketVolumeDaily[TicketsCreated]", "TicketVolumeDaily[TicketsResolved]"],
+          "description": "Line chart showing daily created vs. resolved tickets over time. Two lines with legend."
+        },
+        {
+          "title": "Tickets by Category",
+          "type": "donutChart",
+          "position": { "x": 640, "y": 130, "width": 320, "height": 280 },
+          "legend": "CategoryDim[CategoryName]",
+          "values": "_Measures[Total Tickets]",
+          "description": "Donut chart breaking down ticket volume by category."
+        },
+        {
+          "title": "Tickets by Priority",
+          "type": "stackedBarChart",
+          "position": { "x": 960, "y": 130, "width": 320, "height": 280 },
+          "axis": "TicketFact[PriorityLabel]",
+          "values": "_Measures[Total Tickets]",
+          "description": "Horizontal bar chart colored by priority level (Critical=red, High=orange, Medium=yellow, Low=green)."
+        },
+        {
+          "title": "Tickets by Source",
+          "type": "pieChart",
+          "position": { "x": 0, "y": 420, "width": 320, "height": 280 },
+          "legend": "TicketFact[SourceLabel]",
+          "values": "_Measures[Total Tickets]",
+          "description": "Pie chart showing ticket intake channel distribution."
+        },
+        {
+          "title": "Open Tickets by Status",
+          "type": "stackedColumnChart",
+          "position": { "x": 320, "y": 420, "width": 480, "height": 280 },
+          "axis": "TicketFact[StatusLabel]",
+          "values": "_Measures[Total Tickets]",
+          "legend": "TicketFact[PriorityLabel]",
+          "description": "Stacked column chart showing open ticket distribution by status and priority."
+        },
+        {
+          "title": "Top 10 Subcategories",
+          "type": "table",
+          "position": { "x": 800, "y": 420, "width": 480, "height": 280 },
+          "columns": ["SubcategoryDim[SubcategoryName]", "_Measures[Total Tickets]", "_Measures[Avg Resolution Hours]"],
+          "description": "Table showing top 10 subcategories by volume with resolution time."
+        }
+      ],
+      "slicers": [
+        {
+          "field": "DateDim[FullDate]",
+          "type": "dateRange",
+          "position": { "x": 0, "y": -40, "width": 300, "height": 40 },
+          "description": "Date range slicer for filtering all visuals."
+        },
+        {
+          "field": "CategoryDim[CategoryName]",
+          "type": "dropdown",
+          "position": { "x": 310, "y": -40, "width": 200, "height": 40 },
+          "description": "Category dropdown slicer."
+        },
+        {
+          "field": "DepartmentDim[DepartmentName]",
+          "type": "dropdown",
+          "position": { "x": 520, "y": -40, "width": 200, "height": 40 },
+          "description": "Department dropdown slicer."
+        }
+      ]
+    },
+    {
+      "name": "SLACompliance",
+      "displayName": "SLA Compliance",
+      "displayOption": "FitToPage",
+      "width": 1280,
+      "height": 720,
+      "visuals": [
+        {
+          "title": "SLA Compliance %",
+          "type": "gauge",
+          "position": { "x": 0, "y": 0, "width": 320, "height": 240 },
+          "measure": "_Measures[SLA Compliance %]",
+          "target": 95,
+          "description": "Gauge showing overall SLA compliance against 95% target."
+        },
+        {
+          "title": "First Response SLA %",
+          "type": "gauge",
+          "position": { "x": 320, "y": 0, "width": 320, "height": 240 },
+          "measure": "_Measures[First Response SLA %]",
+          "target": 90,
+          "description": "Gauge showing first response SLA compliance against 90% target."
+        },
+        {
+          "title": "SLA Breach Count",
+          "type": "card",
+          "position": { "x": 640, "y": 0, "width": 320, "height": 120 },
+          "measure": "CALCULATE(COUNTROWS(TicketFact), TicketFact[SLABreached] = TRUE())",
+          "description": "KPI card with total breach count. Conditional formatting: red if > 0."
+        },
+        {
+          "title": "30-Day Trend",
+          "type": "card",
+          "position": { "x": 640, "y": 120, "width": 320, "height": 120 },
+          "measure": "_Measures[Tickets Trending (30-day)]",
+          "description": "KPI card showing 30-day volume trend percentage with up/down indicator."
+        },
+        {
+          "title": "Monthly SLA Compliance Trend",
+          "type": "lineChart",
+          "position": { "x": 0, "y": 250, "width": 640, "height": 240 },
+          "axis": "SLAComplianceMonthly[Year] & SLAComplianceMonthly[Month]",
+          "values": ["SLAComplianceMonthly[CompliancePct]"],
+          "description": "Line chart showing monthly SLA compliance percentage with a constant 95% target line."
+        },
+        {
+          "title": "SLA Compliance by Category",
+          "type": "clusteredBarChart",
+          "position": { "x": 640, "y": 250, "width": 640, "height": 240 },
+          "axis": "CategoryDim[CategoryName]",
+          "values": ["_Measures[SLA Compliance %]"],
+          "description": "Horizontal bar chart comparing SLA compliance across categories. Conditional formatting: red below 90%, yellow 90-95%, green above 95%."
+        },
+        {
+          "title": "Breached Tickets Detail",
+          "type": "table",
+          "position": { "x": 0, "y": 500, "width": 1280, "height": 200 },
+          "columns": [
+            "TicketFact[TicketNumber]",
+            "TicketFact[Title]",
+            "CategoryDim[CategoryName]",
+            "TicketFact[PriorityLabel]",
+            "AgentDim[DisplayName]",
+            "TicketFact[DueDate]",
+            "TicketFact[ResolutionMinutes]"
+          ],
+          "filter": "TicketFact[SLABreached] = TRUE()",
+          "description": "Detailed table of all SLA-breached tickets with drill-through to ticket detail."
+        }
+      ],
+      "slicers": [
+        {
+          "field": "DateDim[FullDate]",
+          "type": "dateRange",
+          "position": { "x": 0, "y": -40, "width": 300, "height": 40 }
+        },
+        {
+          "field": "CategoryDim[CategoryName]",
+          "type": "dropdown",
+          "position": { "x": 310, "y": -40, "width": 200, "height": 40 }
+        },
+        {
+          "field": "TicketFact[PriorityLabel]",
+          "type": "dropdown",
+          "position": { "x": 520, "y": -40, "width": 200, "height": 40 }
+        }
+      ]
+    },
+    {
+      "name": "AgentPerformance",
+      "displayName": "Agent Performance",
+      "displayOption": "FitToPage",
+      "width": 1280,
+      "height": 720,
+      "visuals": [
+        {
+          "title": "Agent Leaderboard",
+          "type": "table",
+          "position": { "x": 0, "y": 0, "width": 640, "height": 340 },
+          "columns": [
+            "AgentDim[DisplayName]",
+            "AgentPerformanceWeekly[TicketsResolved]",
+            "AgentPerformanceWeekly[AvgResolutionMinutes]",
+            "AgentPerformanceWeekly[AvgSatisfaction]",
+            "AgentPerformanceWeekly[SLABreachCount]"
+          ],
+          "description": "Table ranking agents by tickets resolved. Data bars on resolution count. Conditional formatting on satisfaction (green >= 4.0, yellow >= 3.0, red < 3.0)."
+        },
+        {
+          "title": "Tickets Resolved by Agent (Weekly)",
+          "type": "clusteredColumnChart",
+          "position": { "x": 640, "y": 0, "width": 640, "height": 340 },
+          "axis": "AgentDim[DisplayName]",
+          "values": ["AgentPerformanceWeekly[TicketsResolved]"],
+          "legend": "AgentPerformanceWeekly[Year] & AgentPerformanceWeekly[WeekNumber]",
+          "description": "Clustered column chart showing weekly resolved ticket count per agent."
+        },
+        {
+          "title": "Avg Resolution Time by Agent",
+          "type": "barChart",
+          "position": { "x": 0, "y": 350, "width": 640, "height": 340 },
+          "axis": "AgentDim[DisplayName]",
+          "values": ["_Measures[Avg Resolution Hours]"],
+          "description": "Horizontal bar chart showing average resolution hours per agent. Sorted ascending (fastest first)."
+        },
+        {
+          "title": "Agent Satisfaction Trend",
+          "type": "lineChart",
+          "position": { "x": 640, "y": 350, "width": 640, "height": 340 },
+          "axis": "AgentPerformanceWeekly[WeekNumber]",
+          "values": ["AgentPerformanceWeekly[AvgSatisfaction]"],
+          "legend": "AgentDim[DisplayName]",
+          "description": "Line chart showing satisfaction trend per agent over weeks. Reference line at 4.0 target."
+        }
+      ],
+      "slicers": [
+        {
+          "field": "DateDim[FullDate]",
+          "type": "dateRange",
+          "position": { "x": 0, "y": -40, "width": 300, "height": 40 }
+        },
+        {
+          "field": "AgentDim[TeamName]",
+          "type": "dropdown",
+          "position": { "x": 310, "y": -40, "width": 200, "height": 40 }
+        },
+        {
+          "field": "AgentDim[DisplayName]",
+          "type": "dropdown",
+          "position": { "x": 520, "y": -40, "width": 200, "height": 40 }
+        }
+      ]
+    },
+    {
+      "name": "ExecutiveSummary",
+      "displayName": "Executive Summary",
+      "displayOption": "FitToPage",
+      "width": 1280,
+      "height": 720,
+      "visuals": [
+        {
+          "title": "Total Tickets (MTD)",
+          "type": "card",
+          "position": { "x": 0, "y": 0, "width": 256, "height": 120 },
+          "measure": "_Measures[Total Tickets]",
+          "description": "Month-to-date total ticket count with sparkline."
+        },
+        {
+          "title": "SLA Compliance %",
+          "type": "card",
+          "position": { "x": 256, "y": 0, "width": 256, "height": 120 },
+          "measure": "_Measures[SLA Compliance %]",
+          "description": "Current SLA compliance with trend indicator arrow."
+        },
+        {
+          "title": "Avg Satisfaction",
+          "type": "card",
+          "position": { "x": 512, "y": 0, "width": 256, "height": 120 },
+          "measure": "_Measures[Avg Satisfaction]",
+          "description": "Average CSAT with star visualization."
+        },
+        {
+          "title": "Avg Resolution Hours",
+          "type": "card",
+          "position": { "x": 768, "y": 0, "width": 256, "height": 120 },
+          "measure": "_Measures[Avg Resolution Hours]",
+          "description": "Mean resolution time with trend comparison to prior period."
+        },
+        {
+          "title": "Volume Trend",
+          "type": "card",
+          "position": { "x": 1024, "y": 0, "width": 256, "height": 120 },
+          "measure": "_Measures[Tickets Trending (30-day)]",
+          "description": "30-day volume trend percentage."
+        },
+        {
+          "title": "Ticket Volume by Department",
+          "type": "treemap",
+          "position": { "x": 0, "y": 130, "width": 640, "height": 280 },
+          "group": "DepartmentDim[DepartmentName]",
+          "values": "_Measures[Total Tickets]",
+          "description": "Treemap showing which departments generate the most tickets. Size = volume, color saturation = avg resolution time."
+        },
+        {
+          "title": "Monthly SLA Compliance & Satisfaction",
+          "type": "comboChart",
+          "position": { "x": 640, "y": 130, "width": 640, "height": 280 },
+          "columnAxis": "DateDim[YearMonth]",
+          "columnValues": ["SLAComplianceMonthly[CompliancePct]"],
+          "lineValues": ["_Measures[Avg Satisfaction]"],
+          "description": "Combo chart: columns for SLA compliance %, line for avg satisfaction, both trended monthly."
+        },
+        {
+          "title": "Cost Center Chargeback Summary",
+          "type": "matrix",
+          "position": { "x": 0, "y": 420, "width": 640, "height": 280 },
+          "rows": ["DepartmentDim[DepartmentName]", "DepartmentDim[CostCenter]"],
+          "columns": ["TicketFact[PriorityLabel]"],
+          "values": ["_Measures[Total Tickets]", "_Measures[Avg Resolution Hours]"],
+          "description": "Matrix showing ticket counts and avg resolution by department/cost center, pivoted by priority."
+        },
+        {
+          "title": "Top Issues (Subcategory Pareto)",
+          "type": "comboChart",
+          "position": { "x": 640, "y": 420, "width": 640, "height": 280 },
+          "columnAxis": "SubcategoryDim[SubcategoryName]",
+          "columnValues": ["_Measures[Total Tickets]"],
+          "lineValues": ["Running total % (calculated)"],
+          "description": "Pareto chart: bars for ticket count by subcategory (sorted descending), line for cumulative percentage. Highlights the 80/20 split."
+        }
+      ],
+      "slicers": [
+        {
+          "field": "DateDim[FullDate]",
+          "type": "dateRange",
+          "position": { "x": 0, "y": -40, "width": 300, "height": 40 },
+          "description": "Date range slicer defaulting to current month."
+        },
+        {
+          "field": "DepartmentDim[DepartmentName]",
+          "type": "dropdown",
+          "position": { "x": 310, "y": -40, "width": 200, "height": 40 },
+          "description": "Department filter for executive drill-down."
+        },
+        {
+          "field": "CategoryDim[CategoryName]",
+          "type": "dropdown",
+          "position": { "x": 520, "y": -40, "width": 200, "height": 40 },
+          "description": "Category filter."
+        }
+      ]
+    }
+  ]
+}

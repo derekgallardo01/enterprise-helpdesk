@@ -1,0 +1,23 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/spfx/adaptive-card-extension-manifest.schema.json",
+  "id": "d7e4f3a1-9c5b-4e2d-8f1a-3b6c7d8e9f0a",
+  "alias": "TicketSummaryAdaptiveCardExtension",
+  "componentType": "AdaptiveCardExtension",
+  "version": "*",
+  "manifestVersion": 2,
+  "requiresCustomScript": false,
+  "preconfiguredEntries": [
+    {
+      "groupId": "1edbd9a8-0bfb-4aa2-9afd-14b8c45d1020",
+      "group": { "default": "Help Desk" },
+      "title": { "default": "Ticket Summary" },
+      "description": { "default": "Shows open ticket count, SLA breaches, and unassigned tickets" },
+      "iconImageUrl": "https://res-1.cdn.office.net/files/fabric-cdn-prod_20230815.002/assets/brand-icons/product/svg/forms_48x1.svg",
+      "properties": {
+        "dataverseUrl": "",
+        "dashboardPageUrl": ""
+      },
+      "cardSize": "Medium"
+    }
+  ]
+}

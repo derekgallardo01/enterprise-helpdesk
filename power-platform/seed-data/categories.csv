@@ -1,0 +1,6 @@
+hd_name,hd_isactive,hd_description
+Hardware,Yes,"Requests related to physical IT equipment including laptops, desktops, monitors, printers, and peripherals"
+Software,Yes,"Requests related to software installation, licensing, bugs, updates, and application support"
+Network & Connectivity,Yes,"Issues with VPN, Wi-Fi, internet access, firewall rules, and general network connectivity"
+Access & Permissions,Yes,"Requests for password resets, account unlocks, new accounts, permission changes, and access provisioning"
+Email & Communication,Yes,"Issues with Outlook, Microsoft Teams, distribution lists, shared mailboxes, and communication tools"

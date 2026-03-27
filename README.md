@@ -77,23 +77,38 @@ Security is enforced at the Dataverse platform level via security roles + busine
 ## Phased Build Order
 
 ```
-Phase 1: Dataverse + Model-Driven ──> Phase 2: Power Automate ──> Phase 3: Canvas App
-                                                                        |
-Phase 5: Azure Functions + SQL  <── Phase 4: SPFx Web Parts <──────────┘
-        |
-Phase 6: Power BI ──────────────> Phase 7: Copilot Studio + AI
+Prerequisites + IaC (infra/)
+    |
+Phase 1 (Dataverse + Model-Driven) ─── FOUNDATION
+    |
+    ├──> Phase 2 (Power Automate)  ──> Phase 3 (Canvas App)
+    |
+    ├──> Phase 4 (SPFx)  ←── parallel
+    |
+    └──> Phase 5 (Azure Functions + SQL)
+              |
+              ├──> Phase 6 (Power BI)
+              └──> Phase 7 (Copilot Studio + AI)
+                        |
+Phase 8 (Operational Readiness) ── DR, monitoring, runbooks, IaC
+Phase 9 (Testing & Hardening)  ── integration, load, security, a11y
+Phase 10 (UAT Pilot & Rollout) ── real users, measured go-live
 ```
 
-| Phase | What | Hours | Why This Order |
+| Phase | What | Hours | Status |
 |---|---|---|---|
-| 1 | Dataverse Schema + Model-Driven App | 10 | Foundation — everything depends on the schema |
-| 2 | Power Automate Workflows | 7 | Validates schema under realistic scenarios |
-| 3 | Canvas App (Self-Service Portal) | 9 | Needs working workflows so tickets auto-route |
-| 4 | SPFx Web Parts (SharePoint Portal) | 14 | Needs reference UX from Canvas App |
-| 5 | Azure Functions + Azure SQL | 9 | Extends Power Automate with code-level processing |
-| 6 | Power BI Reports | 7 | Needs SQL warehouse from Phase 5 |
-| 7 | Copilot Studio + AI | 7 | Needs ALL prior phases for full end-to-end demo |
-| | **Total** | **63** | |
+| 0 | Prerequisites + Infrastructure-as-Code | 4 | Built (Bicep templates) |
+| 1 | Dataverse Schema + Model-Driven App | 10 | Documented (seed data, solution scaffold) |
+| 2 | Power Automate Workflows | 7 | Documented (flow definitions) |
+| 3 | Canvas App (Self-Service Portal) | 9 | Documented (screen specs) |
+| 4 | SPFx Web Parts (SharePoint Portal) | 14 | **Built** (React components, DataGrid, KB Search, ACE) |
+| 5 | Azure Functions + Azure SQL | 9 | **Built** (sync, webhooks, AI classification, health check) |
+| 6 | Power BI Reports | 7 | Built (PBIP project, semantic model, DAX measures) |
+| 7 | Copilot Studio + AI | 7 | Documented (topic definitions, prompt templates) |
+| 8 | Operational Readiness | 12 | **Built** (DR, monitoring, runbooks, deployment guide, GDPR, IaC) |
+| 9 | Testing & Hardening | 10 | **Built** (xUnit tests, k6 scripts, security tests, seed data) |
+| 10 | UAT Pilot & Rollout | 6 | Built (UAT plan, go/no-go checklist) |
+| | **Total** | **~91** | |
 
 Each phase produces a working, demoable increment. No phase is a dead-end.
 
@@ -110,20 +125,59 @@ Each phase produces a working, demoable increment. No phase is a dead-end.
 
 ```
 enterprise-helpdesk/
-├── docs/                          # Architecture documentation
-│   ├── architecture.md            # Full architecture doc
-│   ├── data-model.md              # Dataverse schema reference
-│   ├── security-model.md          # Roles, DLP, governance
-│   └── decisions/                 # Architecture Decision Records
-├── spfx/helpdesk-spfx/            # SPFx solution (Phase 4)
-├── functions/HelpDesk.Functions/   # Azure Functions .NET 10 (Phase 5)
-├── sql/                           # Azure SQL star schema (Phase 5)
-├── power-platform/solutions/      # Exported Dataverse solution XML
-└── .github/workflows/             # CI/CD pipelines
+├── docs/                              # Architecture & operational documentation
+│   ├── architecture.md                # Full architecture with justifications
+│   ├── data-model.md                  # Dataverse schema, relationships, business rules
+│   ├── security-model.md              # Roles, DLP, governance, ALM
+│   ├── disaster-recovery.md           # DR/BC plan, RTO/RPO, failover procedures
+│   ├── monitoring-alerting.md         # Health checks, alert thresholds, dashboards
+│   ├── deployment-guide.md            # Step-by-step deployment with IaC references
+│   ├── capacity-planning.md           # Growth projections, scaling tiers, cost projections
+│   ├── change-management.md           # CAB process, release notes, rollback procedures
+│   ├── gdpr-compliance.md             # Data map, DSAR, retention, anonymization
+│   ├── cost-analysis.md               # Licensing, Azure costs, TCO vs ServiceNow/Zendesk
+│   ├── testing-strategy.md            # Unit, integration, security, performance, a11y
+│   ├── uat-plan.md                    # UAT pilot plan, success criteria, rollout
+│   ├── decisions/                     # Architecture Decision Records (4 ADRs)
+│   └── runbooks/                      # 5 incident response runbooks
+├── spfx/helpdesk-spfx/               # SPFx solution (React 18.3 + Fluent UI v9)
+│   ├── src/components/                # StatusBadge, PriorityIcon, TicketDetailPanel, etc.
+│   ├── src/context/                   # TicketContext (React Context + useReducer)
+│   ├── src/hooks/                     # useTickets, useKBSearch (300ms debounce)
+│   ├── src/services/                  # TicketService, KBService (Dataverse + Graph)
+│   ├── src/webparts/                  # TicketDashboard, KBSearch web parts
+│   └── src/adaptiveCardExtensions/    # Viva Connections ticket summary ACE
+├── functions/HelpDesk.Functions/      # Azure Functions (.NET 10 Isolated Worker)
+│   ├── Functions/                     # EmailToTicket, DataverseSyncToSQL, GraphSync,
+│   │                                  # WebhookReceiver, HealthCheck, ClassifyTicket,
+│   │                                  # SuggestResponse
+│   ├── Services/                      # DataverseService, DataverseSyncService,
+│   │                                  # AIClassificationService
+│   └── Middleware/                     # ExceptionHandlingMiddleware
+├── functions/HelpDesk.Functions.Tests/ # xUnit + Moq test project
+├── sql/                               # Azure SQL star schema + migrations + sprocs
+├── infra/                             # Bicep IaC (modular: Function App, SQL, KV, monitoring)
+│   ├── main.bicep                     # Orchestrator
+│   ├── modules/                       # functionapp, sql, monitoring, keyvault
+│   └── parameters/                    # dev.bicepparam, prod.bicepparam
+├── power-platform/                    # Power Platform solution + seed data
+│   ├── solutions/HelpDesk/            # Solution scaffold (.cdsproj, Solution.xml)
+│   ├── seed-data/                     # Categories, subcategories, SLA profiles, departments
+│   ├── flows/                         # Power Automate flow definitions
+│   └── canvas-app/                    # Canvas app screen documentation
+├── powerbi/                           # Power BI project (PBIP format, DAX measures)
+├── copilot-studio/                    # Bot topic definitions + AI prompt templates
+├── tests/                             # Integration, security, performance, seed data
+│   ├── integration/                   # E2E test scripts + setup/teardown
+│   ├── security/                      # RBAC verification scripts
+│   ├── performance/                   # k6 load test scripts
+│   └── seed-data/                     # 1,000 test tickets generator
+└── .github/workflows/                 # CI/CD (Functions deploy, SPFx deploy with tests)
 ```
 
 ## Documentation
 
+### Architecture & Design
 - [Architecture](docs/architecture.md) — Full enterprise architecture with justifications
 - [Data Model](docs/data-model.md) — Dataverse schema, relationships, business rules
 - [Security Model](docs/security-model.md) — Roles, DLP, environment strategy, ALM, compliance
@@ -132,3 +186,30 @@ enterprise-helpdesk/
   - [ADR-002: Azure SQL Reporting Warehouse](docs/decisions/002-azure-sql-reporting-warehouse.md)
   - [ADR-003: SPFx over Power Apps iframe](docs/decisions/003-spfx-over-power-apps-iframe.md)
   - [ADR-004: Copilot Studio over Bot Framework](docs/decisions/004-copilot-studio-over-bot-framework.md)
+
+### Operational Readiness
+- [Disaster Recovery](docs/disaster-recovery.md) — RTO/RPO targets, backup strategy, failover procedures
+- [Monitoring & Alerting](docs/monitoring-alerting.md) — Health checks, alert thresholds, KQL queries
+- [Deployment Guide](docs/deployment-guide.md) — Step-by-step from zero to production
+- [Capacity Planning](docs/capacity-planning.md) — Growth projections, component limits, cost projections
+- [Change Management](docs/change-management.md) — CAB process, release notes, rollback procedures
+- [GDPR Compliance](docs/gdpr-compliance.md) — Data map, subject access requests, retention policies
+- [Cost Analysis](docs/cost-analysis.md) — Licensing breakdown, TCO vs. ServiceNow/Zendesk
+- [Testing Strategy](docs/testing-strategy.md) — Unit, integration, security, performance, accessibility
+- [UAT Plan](docs/uat-plan.md) — Pilot plan, success criteria, measured rollout
+- [Incident Runbooks](docs/runbooks/) — 5 scenarios: API throttling, sync failure, email parsing, access issues, stale data
+
+## Anti-Patterns Avoided
+
+This project deliberately avoids common Power Platform mistakes:
+
+| Anti-Pattern | What We Do Instead | Why |
+|---|---|---|
+| Everything in SharePoint Lists | Dataverse with RLS + delegation | 5,000 item threshold, no row-level security |
+| Analytical queries against Dataverse | Azure SQL star schema via delta sync | Protects 6,000 req/5min API quota |
+| Power Apps iframe in SharePoint | SPFx with Fluent UI v9 | <1s load vs 3-5s, inherits theme, <100KB bundle |
+| All logic in Power Automate | Power Automate orchestrates, Functions execute | Avoid 200-step monster flows |
+| Editing in Production | Managed solutions, Dev→Test→Prod | No rollback, no audit trail |
+| Flat security model | 4 roles + column security + business units | Everyone sees everything = compliance nightmare |
+| Custom bot from scratch | Copilot Studio + generative answers | 40+ hours saved, zero training data needed |
+| Single-store monolith | Three-store pattern | One outage ≠ total system failure |

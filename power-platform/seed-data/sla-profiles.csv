@@ -1,0 +1,7 @@
+hd_name,hd_firstresponseminutes,hd_resolutionminutes,hd_businesshoursonly
+Critical,30,240,No
+High,60,480,Yes
+Medium,120,1440,Yes
+Low,240,2880,Yes
+VIP,15,120,No
+Default,120,1440,Yes

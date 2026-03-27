@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ImportExportXml version="9.2.24014.10010"
+                 SolutionPackageVersion="9.2"
+                 languagecode="1033"
+                 generatedBy="CrmLive"
+                 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <SolutionManifest>
+    <UniqueName>HelpDesk</UniqueName>
+    <LocalizedNames>
+      <LocalizedName description="Enterprise Help Desk" languagecode="1033" />
+    </LocalizedNames>
+    <Descriptions>
+      <Description description="Enterprise Help Desk solution containing custom tables, security roles, flows, and canvas app for IT service management." languagecode="1033" />
+    </Descriptions>
+    <Version>1.0.0.0</Version>
+    <Managed>2</Managed>
+    <Publisher>
+      <UniqueName>ContosoIT</UniqueName>
+      <LocalizedNames>
+        <LocalizedName description="Contoso IT" languagecode="1033" />
+      </LocalizedNames>
+      <Descriptions>
+        <Description description="Contoso IT department — publisher for enterprise helpdesk solution components" languagecode="1033" />
+      </Descriptions>
+      <EMailAddress>it-platform@contoso.com</EMailAddress>
+      <SupportingWebsiteUrl>https://helpdesk.contoso.com</SupportingWebsiteUrl>
+      <CustomizationPrefix>hd</CustomizationPrefix>
+      <CustomizationOptionValuePrefix>10000</CustomizationOptionValuePrefix>
+      <Addresses>
+        <Address>
+          <AddressNumber>1</AddressNumber>
+          <City />
+          <County />
+          <Country />
+          <Fax />
+          <ShippingMethodCode xsi:nil="true" />
+          <Latitude xsi:nil="true" />
+          <Line1 />
+          <Line2 />
+          <Longitude xsi:nil="true" />
+          <Name />
+          <PostalCode />
+          <PostOfficeBox />
+          <PrimaryContactName />
+          <StateOrProvince />
+          <Telephone1 />
+          <Telephone2 />
+          <Telephone3 />
+          <TimeZoneRuleVersionNumber xsi:nil="true" />
+          <UTCOffset xsi:nil="true" />
+          <UPSZone />
+          <AddressTypeCode xsi:nil="true" />
+          <FreightTermsCode xsi:nil="true" />
+        </Address>
+        <Address>
+          <AddressNumber>2</AddressNumber>
+          <City />
+          <County />
+          <Country />
+          <Fax />
+          <ShippingMethodCode xsi:nil="true" />
+          <Latitude xsi:nil="true" />
+          <Line1 />
+          <Line2 />
+          <Longitude xsi:nil="true" />
+          <Name />
+          <PostalCode />
+          <PostOfficeBox />
+          <PrimaryContactName />
+          <StateOrProvince />
+          <Telephone1 />
+          <Telephone2 />
+          <Telephone3 />
+          <TimeZoneRuleVersionNumber xsi:nil="true" />
+          <UTCOffset xsi:nil="true" />
+          <UPSZone />
+          <AddressTypeCode xsi:nil="true" />
+          <FreightTermsCode xsi:nil="true" />
+        </Address>
+      </Addresses>
+    </Publisher>
+    <RootComponents>
+      <!-- Core Tables -->
+      <RootComponent type="1" schemaName="hd_ticket" behavior="0" />
+      <RootComponent type="1" schemaName="hd_ticketcomment" behavior="0" />
+      <RootComponent type="1" schemaName="hd_category" behavior="0" />
+      <RootComponent type="1" schemaName="hd_subcategory" behavior="0" />
+      <RootComponent type="1" schemaName="hd_asset" behavior="0" />
+      <RootComponent type="1" schemaName="hd_slaprofile" behavior="0" />
+      <RootComponent type="1" schemaName="hd_department" behavior="0" />
+      <RootComponent type="1" schemaName="hd_kbarticleref" behavior="0" />
+      <!-- Security Roles -->
+      <RootComponent type="92" id="{00000000-0000-0000-0000-000000000001}" schemaName="HD - Administrator" />
+      <RootComponent type="92" id="{00000000-0000-0000-0000-000000000002}" schemaName="HD - Agent" />
+      <RootComponent type="92" id="{00000000-0000-0000-0000-000000000003}" schemaName="HD - Manager" />
+      <RootComponent type="92" id="{00000000-0000-0000-0000-000000000004}" schemaName="HD - Requester" />
+    </RootComponents>
+    <MissingDependencies />
+  </SolutionManifest>
+</ImportExportXml>

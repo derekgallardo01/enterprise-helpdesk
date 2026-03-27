@@ -1,0 +1,28 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/spfx/client-side-web-part-manifest.schema.json",
+  "id": "e5f6a7b8-c9d0-1234-efab-567890123456",
+  "alias": "HelpdeskKBSearchWebPart",
+  "componentType": "WebPart",
+  "version": "*",
+  "manifestVersion": 2,
+  "requiresCustomScript": false,
+  "supportedHosts": [
+    "SharePointWebPart",
+    "TeamsPersonalApp",
+    "TeamsTab",
+    "SharePointFullPage"
+  ],
+  "preconfiguredEntries": [
+    {
+      "groupId": "5c03119e-3074-46fd-976b-c60198311f70",
+      "group": { "default": "Enterprise Help Desk" },
+      "title": { "default": "Help Desk KB Search" },
+      "description": { "default": "Search knowledge base articles via Microsoft Graph" },
+      "officeFabricIconFontName": "Search",
+      "properties": {
+        "kbSiteUrl": "",
+        "dataverseUrl": ""
+      }
+    }
+  ]
+}

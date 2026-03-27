@@ -1,0 +1,228 @@
+kind: PowerAutomateFlow
+name: auto-categorize
+displayName: HD - Auto-Categorize Ticket
+description: >
+  Power Automate cloud flow triggered when a new ticket is created with a blank
+  category. Calls the ClassifyTicket Azure Function to predict the category and
+  subcategory using AI. If confidence exceeds the threshold, the category is
+  auto-assigned. Otherwise, an internal comment is added for the agent to review.
+
+trigger:
+  type: DataverseRowAdded
+  table: hd_ticket
+  filterExpression: "hd_category eq null"
+  selectedColumns:
+    - hd_ticketid
+    - hd_ticketnumber
+    - hd_title
+    - hd_description
+    - hd_category
+    - hd_source
+
+configuration:
+  confidenceThreshold: 0.8
+  classifyEndpoint: "{EnvironmentVariable:hd_ClassifyTicketFlowUrl}"
+  fallbackCategoryName: "Software"
+
+steps:
+  # ------------------------------------------------------------------
+  # Step 1: Validate trigger conditions
+  # ------------------------------------------------------------------
+  - id: step-validate
+    name: Check Category Is Blank
+    type: Condition
+    expression: "empty(triggerOutputs()?['body/hd_category'])"
+    ifTrue: step-call-classify
+    ifFalse: step-terminate-skip
+    description: >
+      Guard condition: only proceed if the ticket truly has no category.
+      Prevents re-processing if the trigger fires on update.
+
+  - id: step-terminate-skip
+    name: Terminate (Already Categorized)
+    type: Terminate
+    status: Succeeded
+    message: "Ticket already has a category assigned. Skipping auto-categorization."
+
+  # ------------------------------------------------------------------
+  # Step 2: Call ClassifyTicket Azure Function
+  # ------------------------------------------------------------------
+  - id: step-call-classify
+    name: Call ClassifyTicket Function
+    type: HTTP
+    method: POST
+    uri: "{configuration.classifyEndpoint}"
+    headers:
+      Content-Type: application/json
+      x-functions-key: "{EnvironmentVariable:hd_ClassifyFunctionKey}"
+    body:
+      title: "@{triggerOutputs()?['body/hd_title']}"
+      description: "@{triggerOutputs()?['body/hd_description']}"
+    retryPolicy:
+      type: exponential
+      count: 3
+      interval: PT10S
+      maximumInterval: PT1M
+    timeout: PT30S
+    description: >
+      Sends the ticket title and description to the ClassifyTicket Azure
+      Function, which uses Azure OpenAI to predict the best-matching
+      category and subcategory.
+
+  # ------------------------------------------------------------------
+  # Step 3: Parse response
+  # ------------------------------------------------------------------
+  - id: step-parse-response
+    name: Parse Classification Response
+    type: ParseJSON
+    content: "@{body('step-call-classify')}"
+    schema:
+      type: object
+      properties:
+        categoryName:
+          type: string
+        categoryId:
+          type: string
+        subcategoryName:
+          type: string
+        subcategoryId:
+          type: string
+        confidence:
+          type: number
+        reasoning:
+          type: string
+
+  # ------------------------------------------------------------------
+  # Step 4: Evaluate confidence
+  # ------------------------------------------------------------------
+  - id: step-check-confidence
+    name: Check Confidence Threshold
+    type: Condition
+    expression: "greater(body('step-parse-response')?['confidence'], {configuration.confidenceThreshold})"
+    ifTrue: step-auto-assign
+    ifFalse: step-low-confidence
+    description: >
+      If confidence > 0.8, auto-assign the category. Otherwise, add an
+      internal comment with the suggestion for an agent to review.
+
+  # ------------------------------------------------------------------
+  # Step 5a: High confidence -- auto-assign category
+  # ------------------------------------------------------------------
+  - id: step-auto-assign
+    name: Auto-Assign Category
+    type: DataverseUpdateRow
+    table: hd_ticket
+    rowId: "@{triggerOutputs()?['body/hd_ticketid']}"
+    fields:
+      hd_category: "@{body('step-parse-response')?['categoryId']}"
+      hd_subcategory: "@{body('step-parse-response')?['subcategoryId']}"
+    description: >
+      Sets the category and subcategory on the ticket. This will also
+      trigger the Ticket Routing flow which assigns the team and SLA.
+
+  - id: step-add-auto-comment
+    name: Add Auto-Categorization Comment
+    type: DataverseAddRow
+    table: hd_ticketcomment
+    fields:
+      hd_ticket: "@{triggerOutputs()?['body/hd_ticketid']}"
+      hd_commentbody: >
+        [Auto-categorized] AI classified this ticket as
+        **@{body('step-parse-response')?['categoryName']}** >
+        **@{body('step-parse-response')?['subcategoryName']}**
+        with @{formatNumber(body('step-parse-response')?['confidence'], 'P0')}
+        confidence. Reason: @{body('step-parse-response')?['reasoning']}
+      hd_commenttype: 2
+    description: >
+      Adds an internal comment documenting the AI classification decision
+      for audit trail purposes.
+
+  - id: step-terminate-success
+    name: Terminate (Auto-Assigned)
+    type: Terminate
+    status: Succeeded
+    message: >
+      Ticket @{triggerOutputs()?['body/hd_ticketnumber']} auto-categorized as
+      @{body('step-parse-response')?['categoryName']} >
+      @{body('step-parse-response')?['subcategoryName']}
+      (confidence: @{body('step-parse-response')?['confidence']}).
+
+  # ------------------------------------------------------------------
+  # Step 5b: Low confidence -- suggest but do not assign
+  # ------------------------------------------------------------------
+  - id: step-low-confidence
+    name: Add Suggestion Comment (Low Confidence)
+    type: DataverseAddRow
+    table: hd_ticketcomment
+    fields:
+      hd_ticket: "@{triggerOutputs()?['body/hd_ticketid']}"
+      hd_commentbody: >
+        [Needs Review] AI suggests this ticket may belong to
+        **@{body('step-parse-response')?['categoryName']}** >
+        **@{body('step-parse-response')?['subcategoryName']}**
+        but confidence is only @{formatNumber(body('step-parse-response')?['confidence'], 'P0')}.
+        Please review and assign the correct category.
+        Reason: @{body('step-parse-response')?['reasoning']}
+      hd_commenttype: 2
+    description: >
+      Adds an internal comment with the AI suggestion so the triaging
+      agent can quickly categorize the ticket.
+
+  - id: step-notify-triage
+    name: Notify Triage Team
+    type: TeamsPostMessage
+    channel: IT Support - Triage
+    message: >
+      Ticket **@{triggerOutputs()?['body/hd_ticketnumber']}** needs manual
+      categorization. AI suggested
+      @{body('step-parse-response')?['categoryName']} but confidence was
+      below threshold (@{formatNumber(body('step-parse-response')?['confidence'], 'P0')}).
+    description: >
+      Posts a notification to the triage team's Teams channel so uncategorized
+      tickets are addressed promptly.
+
+  - id: step-terminate-review
+    name: Terminate (Needs Review)
+    type: Terminate
+    status: Succeeded
+    message: >
+      Ticket @{triggerOutputs()?['body/hd_ticketnumber']} requires manual
+      categorization (AI confidence:
+      @{body('step-parse-response')?['confidence']}).
+
+errorHandling:
+  scope: step-call-classify, step-parse-response, step-check-confidence
+  onFailure:
+    - id: step-error-comment
+      name: Add Error Comment
+      type: DataverseAddRow
+      table: hd_ticketcomment
+      fields:
+        hd_ticket: "@{triggerOutputs()?['body/hd_ticketid']}"
+        hd_commentbody: >
+          [System] Auto-categorization failed. Error:
+          @{actions('step-call-classify')?['error']?['message']}.
+          Manual categorization required.
+        hd_commenttype: 2
+
+    - id: step-error-notify
+      name: Notify Admins of Failure
+      type: SendEmail
+      to: "{EnvironmentVariable:hd_AdminEmail}"
+      subject: "Auto-categorization failed for @{triggerOutputs()?['body/hd_ticketnumber']}"
+      body: >
+        The auto-categorization flow failed for ticket
+        @{triggerOutputs()?['body/hd_ticketnumber']}.
+
+        Error: @{actions('step-call-classify')?['error']?['message']}
+
+        Ticket ID: @{triggerOutputs()?['body/hd_ticketid']}
+        Title: @{triggerOutputs()?['body/hd_title']}
+
+        Please investigate and categorize manually.
+
+    - id: step-error-terminate
+      name: Terminate (Failed)
+      type: Terminate
+      status: Failed
+      message: "Auto-categorization failed. See error notification."

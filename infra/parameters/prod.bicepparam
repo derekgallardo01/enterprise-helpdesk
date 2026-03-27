@@ -1,0 +1,10 @@
+using '../main.bicep'
+
+param environment = 'prod'
+param location = 'westus'
+param baseName = 'helpdesk'
+param dataverseUrl = 'https://helpdesk-prod.crm.dynamics.com'
+param dataverseClientId = '<PROD-DATAVERSE-CLIENT-ID>'
+param graphClientId = '<PROD-GRAPH-CLIENT-ID>'
+param sqlAdminGroupObjectId = '<PROD-SQL-ADMIN-GROUP-OBJECT-ID>'
+param sqlAdminGroupName = 'HelpDesk-SQL-Admins-Prod'

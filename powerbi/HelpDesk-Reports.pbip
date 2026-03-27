@@ -1,0 +1,15 @@
+{
+  "version": "1.0",
+  "artifacts": [
+    {
+      "report": {
+        "path": "HelpDesk-Reports.Report"
+      }
+    },
+    {
+      "dataset": {
+        "path": "HelpDesk-Reports.Dataset"
+      }
+    }
+  ]
+}

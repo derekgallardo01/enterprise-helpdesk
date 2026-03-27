@@ -1,0 +1,508 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ImportExportXml xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <Entities>
+    <!-- ============================================================ -->
+    <!-- hd_ticket — Primary ticketing entity                         -->
+    <!-- ============================================================ -->
+    <Entity>
+      <Name LocalizedName="Ticket" OriginalName="hd_ticket">hd_ticket</Name>
+      <ObjectTypeCode>10000</ObjectTypeCode>
+      <EntityInfo>
+        <entity Name="hd_ticket">
+          <LocalizedNames>
+            <LocalizedName description="Ticket" languagecode="1033" />
+          </LocalizedNames>
+          <Descriptions>
+            <Description description="The primary IT help desk ticket entity." languagecode="1033" />
+          </Descriptions>
+          <attributes>
+            <attribute PhysicalName="hd_ticketid">
+              <Type>primarykey</Type>
+              <IsCustomField>1</IsCustomField>
+              <DisplayMask>ValidForAdvancedFind|ValidForForm|ValidForGrid</DisplayMask>
+            </attribute>
+            <attribute PhysicalName="hd_ticketnumber">
+              <Type>nvarchar</Type>
+              <MaxLength>20</MaxLength>
+              <AutoNumberFormat>TKT-{SEQNUM:6}</AutoNumberFormat>
+              <DisplayMask>ValidForAdvancedFind|ValidForForm|ValidForGrid</DisplayMask>
+            </attribute>
+            <attribute PhysicalName="hd_title">
+              <Type>nvarchar</Type>
+              <MaxLength>200</MaxLength>
+              <RequiredLevel>required</RequiredLevel>
+            </attribute>
+            <attribute PhysicalName="hd_description">
+              <Type>ntext</Type>
+              <Format>RichText</Format>
+              <RequiredLevel>required</RequiredLevel>
+            </attribute>
+            <attribute PhysicalName="hd_priority">
+              <Type>picklist</Type>
+              <OptionSetName>hd_ticketpriority</OptionSetName>
+            </attribute>
+            <attribute PhysicalName="hd_status">
+              <Type>picklist</Type>
+              <OptionSetName>hd_ticketstatus</OptionSetName>
+            </attribute>
+            <attribute PhysicalName="hd_category">
+              <Type>lookup</Type>
+              <LookupType>hd_category</LookupType>
+              <RequiredLevel>required</RequiredLevel>
+            </attribute>
+            <attribute PhysicalName="hd_subcategory">
+              <Type>lookup</Type>
+              <LookupType>hd_subcategory</LookupType>
+            </attribute>
+            <attribute PhysicalName="hd_requestedby">
+              <Type>lookup</Type>
+              <LookupType>systemuser</LookupType>
+            </attribute>
+            <attribute PhysicalName="hd_assignedto">
+              <Type>lookup</Type>
+              <LookupType>systemuser</LookupType>
+            </attribute>
+            <attribute PhysicalName="hd_assignedteam">
+              <Type>lookup</Type>
+              <LookupType>team</LookupType>
+            </attribute>
+            <attribute PhysicalName="hd_impact">
+              <Type>picklist</Type>
+              <OptionSetName>hd_ticketimpact</OptionSetName>
+            </attribute>
+            <attribute PhysicalName="hd_urgency">
+              <Type>picklist</Type>
+              <OptionSetName>hd_ticketurgency</OptionSetName>
+            </attribute>
+            <attribute PhysicalName="hd_source">
+              <Type>picklist</Type>
+              <OptionSetName>hd_ticketsource</OptionSetName>
+            </attribute>
+            <attribute PhysicalName="hd_duedate">
+              <Type>datetime</Type>
+            </attribute>
+            <attribute PhysicalName="hd_resolutiondate">
+              <Type>datetime</Type>
+            </attribute>
+            <attribute PhysicalName="hd_firstresponseat">
+              <Type>datetime</Type>
+            </attribute>
+            <attribute PhysicalName="hd_slabreach">
+              <Type>bit</Type>
+              <DefaultValue>0</DefaultValue>
+            </attribute>
+            <attribute PhysicalName="hd_resolutionnotes">
+              <Type>ntext</Type>
+            </attribute>
+            <attribute PhysicalName="hd_satisfactionrating">
+              <Type>int</Type>
+              <MinValue>1</MinValue>
+              <MaxValue>5</MaxValue>
+            </attribute>
+            <attribute PhysicalName="hd_relatedasset">
+              <Type>lookup</Type>
+              <LookupType>hd_asset</LookupType>
+            </attribute>
+            <attribute PhysicalName="hd_environment">
+              <Type>picklist</Type>
+              <OptionSetName>hd_ticketenvironment</OptionSetName>
+            </attribute>
+          </attributes>
+        </entity>
+      </EntityInfo>
+    </Entity>
+
+    <!-- ============================================================ -->
+    <!-- hd_ticketcomment — Child conversation thread                 -->
+    <!-- ============================================================ -->
+    <Entity>
+      <Name LocalizedName="Ticket Comment" OriginalName="hd_ticketcomment">hd_ticketcomment</Name>
+      <ObjectTypeCode>10001</ObjectTypeCode>
+      <EntityInfo>
+        <entity Name="hd_ticketcomment">
+          <LocalizedNames>
+            <LocalizedName description="Ticket Comment" languagecode="1033" />
+          </LocalizedNames>
+          <attributes>
+            <attribute PhysicalName="hd_ticketcommentid">
+              <Type>primarykey</Type>
+            </attribute>
+            <attribute PhysicalName="hd_ticket">
+              <Type>lookup</Type>
+              <LookupType>hd_ticket</LookupType>
+              <CascadeAssign>NoCascade</CascadeAssign>
+              <CascadeDelete>Cascade</CascadeDelete>
+            </attribute>
+            <attribute PhysicalName="hd_commentbody">
+              <Type>ntext</Type>
+              <Format>RichText</Format>
+            </attribute>
+            <attribute PhysicalName="hd_commenttype">
+              <Type>picklist</Type>
+              <OptionSetName>hd_commenttype</OptionSetName>
+            </attribute>
+          </attributes>
+        </entity>
+      </EntityInfo>
+    </Entity>
+
+    <!-- ============================================================ -->
+    <!-- hd_category — Top-level classification                       -->
+    <!-- ============================================================ -->
+    <Entity>
+      <Name LocalizedName="Category" OriginalName="hd_category">hd_category</Name>
+      <ObjectTypeCode>10002</ObjectTypeCode>
+      <EntityInfo>
+        <entity Name="hd_category">
+          <LocalizedNames>
+            <LocalizedName description="Category" languagecode="1033" />
+          </LocalizedNames>
+          <attributes>
+            <attribute PhysicalName="hd_categoryid">
+              <Type>primarykey</Type>
+            </attribute>
+            <attribute PhysicalName="hd_name">
+              <Type>nvarchar</Type>
+              <MaxLength>100</MaxLength>
+              <RequiredLevel>required</RequiredLevel>
+            </attribute>
+            <attribute PhysicalName="hd_description">
+              <Type>ntext</Type>
+            </attribute>
+            <attribute PhysicalName="hd_isactive">
+              <Type>bit</Type>
+              <DefaultValue>1</DefaultValue>
+            </attribute>
+            <attribute PhysicalName="hd_defaultteam">
+              <Type>lookup</Type>
+              <LookupType>team</LookupType>
+            </attribute>
+            <attribute PhysicalName="hd_sortorder">
+              <Type>int</Type>
+            </attribute>
+          </attributes>
+        </entity>
+      </EntityInfo>
+    </Entity>
+
+    <!-- ============================================================ -->
+    <!-- hd_subcategory — Second-level classification                 -->
+    <!-- ============================================================ -->
+    <Entity>
+      <Name LocalizedName="Subcategory" OriginalName="hd_subcategory">hd_subcategory</Name>
+      <ObjectTypeCode>10003</ObjectTypeCode>
+      <EntityInfo>
+        <entity Name="hd_subcategory">
+          <LocalizedNames>
+            <LocalizedName description="Subcategory" languagecode="1033" />
+          </LocalizedNames>
+          <attributes>
+            <attribute PhysicalName="hd_subcategoryid">
+              <Type>primarykey</Type>
+            </attribute>
+            <attribute PhysicalName="hd_name">
+              <Type>nvarchar</Type>
+              <MaxLength>100</MaxLength>
+              <RequiredLevel>required</RequiredLevel>
+            </attribute>
+            <attribute PhysicalName="hd_category">
+              <Type>lookup</Type>
+              <LookupType>hd_category</LookupType>
+              <CascadeAssign>NoCascade</CascadeAssign>
+              <CascadeDelete>Cascade</CascadeDelete>
+            </attribute>
+            <attribute PhysicalName="hd_defaultpriority">
+              <Type>picklist</Type>
+              <OptionSetName>hd_ticketpriority</OptionSetName>
+            </attribute>
+            <attribute PhysicalName="hd_slaprofile">
+              <Type>lookup</Type>
+              <LookupType>hd_slaprofile</LookupType>
+            </attribute>
+            <attribute PhysicalName="hd_isactive">
+              <Type>bit</Type>
+              <DefaultValue>1</DefaultValue>
+            </attribute>
+          </attributes>
+        </entity>
+      </EntityInfo>
+    </Entity>
+
+    <!-- ============================================================ -->
+    <!-- hd_asset — IT asset tracking                                 -->
+    <!-- ============================================================ -->
+    <Entity>
+      <Name LocalizedName="Asset" OriginalName="hd_asset">hd_asset</Name>
+      <ObjectTypeCode>10004</ObjectTypeCode>
+      <EntityInfo>
+        <entity Name="hd_asset">
+          <LocalizedNames>
+            <LocalizedName description="Asset" languagecode="1033" />
+          </LocalizedNames>
+          <attributes>
+            <attribute PhysicalName="hd_assetid">
+              <Type>primarykey</Type>
+            </attribute>
+            <attribute PhysicalName="hd_assettag">
+              <Type>nvarchar</Type>
+              <MaxLength>20</MaxLength>
+              <AutoNumberFormat>AST-{SEQNUM:5}</AutoNumberFormat>
+            </attribute>
+            <attribute PhysicalName="hd_name">
+              <Type>nvarchar</Type>
+              <MaxLength>200</MaxLength>
+              <RequiredLevel>required</RequiredLevel>
+            </attribute>
+            <attribute PhysicalName="hd_assettype">
+              <Type>picklist</Type>
+              <OptionSetName>hd_assettype</OptionSetName>
+            </attribute>
+            <attribute PhysicalName="hd_status">
+              <Type>picklist</Type>
+              <OptionSetName>hd_assetstatus</OptionSetName>
+            </attribute>
+            <attribute PhysicalName="hd_assignedto">
+              <Type>lookup</Type>
+              <LookupType>systemuser</LookupType>
+            </attribute>
+            <attribute PhysicalName="hd_department">
+              <Type>lookup</Type>
+              <LookupType>hd_department</LookupType>
+            </attribute>
+            <attribute PhysicalName="hd_purchasedate">
+              <Type>datetime</Type>
+              <Format>DateOnly</Format>
+            </attribute>
+            <attribute PhysicalName="hd_warrantyexpiry">
+              <Type>datetime</Type>
+              <Format>DateOnly</Format>
+            </attribute>
+            <attribute PhysicalName="hd_serialnumber">
+              <Type>nvarchar</Type>
+              <MaxLength>100</MaxLength>
+            </attribute>
+          </attributes>
+        </entity>
+      </EntityInfo>
+    </Entity>
+
+    <!-- ============================================================ -->
+    <!-- hd_slaprofile — SLA time targets                             -->
+    <!-- ============================================================ -->
+    <Entity>
+      <Name LocalizedName="SLA Profile" OriginalName="hd_slaprofile">hd_slaprofile</Name>
+      <ObjectTypeCode>10005</ObjectTypeCode>
+      <EntityInfo>
+        <entity Name="hd_slaprofile">
+          <LocalizedNames>
+            <LocalizedName description="SLA Profile" languagecode="1033" />
+          </LocalizedNames>
+          <attributes>
+            <attribute PhysicalName="hd_slaprofileid">
+              <Type>primarykey</Type>
+            </attribute>
+            <attribute PhysicalName="hd_name">
+              <Type>nvarchar</Type>
+              <MaxLength>100</MaxLength>
+              <RequiredLevel>required</RequiredLevel>
+            </attribute>
+            <attribute PhysicalName="hd_firstresponseminutes">
+              <Type>int</Type>
+              <RequiredLevel>required</RequiredLevel>
+            </attribute>
+            <attribute PhysicalName="hd_resolutionminutes">
+              <Type>int</Type>
+              <RequiredLevel>required</RequiredLevel>
+            </attribute>
+            <attribute PhysicalName="hd_businesshoursonly">
+              <Type>bit</Type>
+              <DefaultValue>1</DefaultValue>
+            </attribute>
+            <attribute PhysicalName="hd_priority">
+              <Type>picklist</Type>
+              <OptionSetName>hd_ticketpriority</OptionSetName>
+            </attribute>
+          </attributes>
+        </entity>
+      </EntityInfo>
+    </Entity>
+
+    <!-- ============================================================ -->
+    <!-- hd_department — Organizational structure                     -->
+    <!-- ============================================================ -->
+    <Entity>
+      <Name LocalizedName="Department" OriginalName="hd_department">hd_department</Name>
+      <ObjectTypeCode>10006</ObjectTypeCode>
+      <EntityInfo>
+        <entity Name="hd_department">
+          <LocalizedNames>
+            <LocalizedName description="Department" languagecode="1033" />
+          </LocalizedNames>
+          <attributes>
+            <attribute PhysicalName="hd_departmentid">
+              <Type>primarykey</Type>
+            </attribute>
+            <attribute PhysicalName="hd_name">
+              <Type>nvarchar</Type>
+              <MaxLength>100</MaxLength>
+              <RequiredLevel>required</RequiredLevel>
+            </attribute>
+            <attribute PhysicalName="hd_manager">
+              <Type>lookup</Type>
+              <LookupType>systemuser</LookupType>
+            </attribute>
+            <attribute PhysicalName="hd_costcenter">
+              <Type>nvarchar</Type>
+              <MaxLength>20</MaxLength>
+            </attribute>
+          </attributes>
+        </entity>
+      </EntityInfo>
+    </Entity>
+
+    <!-- ============================================================ -->
+    <!-- hd_kbarticleref — SharePoint KB cross-reference              -->
+    <!-- ============================================================ -->
+    <Entity>
+      <Name LocalizedName="KB Article Reference" OriginalName="hd_kbarticleref">hd_kbarticleref</Name>
+      <ObjectTypeCode>10007</ObjectTypeCode>
+      <EntityInfo>
+        <entity Name="hd_kbarticleref">
+          <LocalizedNames>
+            <LocalizedName description="KB Article Reference" languagecode="1033" />
+          </LocalizedNames>
+          <attributes>
+            <attribute PhysicalName="hd_kbarticlerefid">
+              <Type>primarykey</Type>
+            </attribute>
+            <attribute PhysicalName="hd_title">
+              <Type>nvarchar</Type>
+              <MaxLength>200</MaxLength>
+              <RequiredLevel>required</RequiredLevel>
+            </attribute>
+            <attribute PhysicalName="hd_sharepointurl">
+              <Type>nvarchar</Type>
+              <MaxLength>500</MaxLength>
+              <Format>Url</Format>
+            </attribute>
+            <attribute PhysicalName="hd_category">
+              <Type>lookup</Type>
+              <LookupType>hd_category</LookupType>
+            </attribute>
+            <attribute PhysicalName="hd_viewcount">
+              <Type>int</Type>
+              <DefaultValue>0</DefaultValue>
+            </attribute>
+            <attribute PhysicalName="hd_helpfulcount">
+              <Type>int</Type>
+              <DefaultValue>0</DefaultValue>
+            </attribute>
+            <attribute PhysicalName="hd_lastupdated">
+              <Type>datetime</Type>
+            </attribute>
+          </attributes>
+        </entity>
+      </EntityInfo>
+    </Entity>
+  </Entities>
+
+  <!-- ============================================================ -->
+  <!-- Global Option Sets                                           -->
+  <!-- ============================================================ -->
+  <optionsets>
+    <optionset Name="hd_ticketpriority" localizedName="Ticket Priority" type="Picklist">
+      <options>
+        <option value="1" localizedName="Critical" color="#D13438" />
+        <option value="2" localizedName="High" color="#CA5010" />
+        <option value="3" localizedName="Medium" color="#FFB900" />
+        <option value="4" localizedName="Low" color="#107C10" />
+      </options>
+    </optionset>
+    <optionset Name="hd_ticketstatus" localizedName="Ticket Status" type="Picklist">
+      <options>
+        <option value="1" localizedName="New" />
+        <option value="2" localizedName="Assigned" />
+        <option value="3" localizedName="In Progress" />
+        <option value="4" localizedName="Waiting on Requester" />
+        <option value="5" localizedName="Waiting on Third Party" />
+        <option value="6" localizedName="Resolved" />
+        <option value="7" localizedName="Closed" />
+        <option value="8" localizedName="Cancelled" />
+      </options>
+    </optionset>
+    <optionset Name="hd_ticketimpact" localizedName="Ticket Impact" type="Picklist">
+      <options>
+        <option value="1" localizedName="Enterprise" />
+        <option value="2" localizedName="Department" />
+        <option value="3" localizedName="Individual" />
+      </options>
+    </optionset>
+    <optionset Name="hd_ticketurgency" localizedName="Ticket Urgency" type="Picklist">
+      <options>
+        <option value="1" localizedName="Critical" />
+        <option value="2" localizedName="High" />
+        <option value="3" localizedName="Medium" />
+        <option value="4" localizedName="Low" />
+      </options>
+    </optionset>
+    <optionset Name="hd_ticketsource" localizedName="Ticket Source" type="Picklist">
+      <options>
+        <option value="1" localizedName="Portal" />
+        <option value="2" localizedName="Email" />
+        <option value="3" localizedName="Teams Bot" />
+        <option value="4" localizedName="Phone" />
+        <option value="5" localizedName="Walk-up" />
+      </options>
+    </optionset>
+    <optionset Name="hd_ticketenvironment" localizedName="Environment" type="Picklist">
+      <options>
+        <option value="1" localizedName="Production" />
+        <option value="2" localizedName="Staging" />
+        <option value="3" localizedName="Development" />
+      </options>
+    </optionset>
+    <optionset Name="hd_commenttype" localizedName="Comment Type" type="Picklist">
+      <options>
+        <option value="1" localizedName="Public" />
+        <option value="2" localizedName="Internal" />
+      </options>
+    </optionset>
+    <optionset Name="hd_assettype" localizedName="Asset Type" type="Picklist">
+      <options>
+        <option value="1" localizedName="Laptop" />
+        <option value="2" localizedName="Desktop" />
+        <option value="3" localizedName="Monitor" />
+        <option value="4" localizedName="Phone" />
+        <option value="5" localizedName="Printer" />
+        <option value="6" localizedName="Server" />
+        <option value="7" localizedName="Software License" />
+      </options>
+    </optionset>
+    <optionset Name="hd_assetstatus" localizedName="Asset Status" type="Picklist">
+      <options>
+        <option value="1" localizedName="Active" />
+        <option value="2" localizedName="In Repair" />
+        <option value="3" localizedName="Retired" />
+        <option value="4" localizedName="Lost" />
+      </options>
+    </optionset>
+  </optionsets>
+
+  <!-- ============================================================ -->
+  <!-- Security Roles                                               -->
+  <!-- ============================================================ -->
+  <Roles>
+    <Role name="HD - Administrator" id="{00000000-0000-0000-0000-000000000001}">
+      <Description>Full control over all Help Desk entities. Can manage categories, SLA profiles, departments, and all tickets. Intended for IT leadership and platform administrators.</Description>
+    </Role>
+    <Role name="HD - Agent" id="{00000000-0000-0000-0000-000000000002}">
+      <Description>Can read, create, update, and resolve tickets. Can add public and internal comments. Can view all tickets in their team. Cannot modify categories, SLA profiles, or departments.</Description>
+    </Role>
+    <Role name="HD - Manager" id="{00000000-0000-0000-0000-000000000003}">
+      <Description>Everything an Agent can do, plus reassign tickets across teams, view reporting dashboards, and manage team-scoped configuration. Cannot modify global settings.</Description>
+    </Role>
+    <Role name="HD - Requester" id="{00000000-0000-0000-0000-000000000004}">
+      <Description>Can create tickets, view their own tickets, add public comments to their own tickets, and submit satisfaction ratings. Cannot see internal comments or other users tickets.</Description>
+    </Role>
+  </Roles>
+</ImportExportXml>

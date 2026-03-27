@@ -1,0 +1,24 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/spfx-build/config.2.0.schema.json",
+  "version": "2.0",
+  "bundles": {
+    "helpdesk-ticket-dashboard-web-part": {
+      "components": [
+        {
+          "entrypoint": "./lib/webparts/helpdeskTicketDashboard/HelpdeskTicketDashboardWebPart.js",
+          "manifest": "./src/webparts/helpdeskTicketDashboard/HelpdeskTicketDashboardWebPart.manifest.json"
+        }
+      ]
+    },
+    "helpdesk-kb-search-web-part": {
+      "components": [
+        {
+          "entrypoint": "./lib/webparts/helpdeskKBSearch/HelpdeskKBSearchWebPart.js",
+          "manifest": "./src/webparts/helpdeskKBSearch/HelpdeskKBSearchWebPart.manifest.json"
+        }
+      ]
+    }
+  },
+  "externals": {},
+  "localizedResources": {}
+}

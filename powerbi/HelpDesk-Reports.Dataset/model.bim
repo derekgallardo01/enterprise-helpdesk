@@ -1,0 +1,425 @@
+{
+  "compatibilityLevel": 1567,
+  "model": {
+    "culture": "en-US",
+    "dataAccessOptions": {
+      "legacyRedirects": true,
+      "returnErrorValuesAsNull": true
+    },
+    "defaultPowerBIDataSourceVersion": "powerBI_V3",
+    "sourceQueryCulture": "en-US",
+
+    "annotations": [
+      {
+        "name": "PBI_QueryOrder",
+        "value": "[\"TicketFact\",\"DateDim\",\"CategoryDim\",\"SubcategoryDim\",\"DepartmentDim\",\"AgentDim\",\"TicketVolumeDaily\",\"SLAComplianceMonthly\",\"AgentPerformanceWeekly\"]"
+      }
+    ],
+
+    "expressions": [
+      {
+        "name": "AzureSqlServer",
+        "kind": "m",
+        "expression": "\"sql-helpdesk-prod.database.windows.net\" meta [IsParameterQuery=true, Type=\"Text\", IsParameterQueryRequired=true]"
+      },
+      {
+        "name": "AzureSqlDatabase",
+        "kind": "m",
+        "expression": "\"sqldb-helpdesk-prod\" meta [IsParameterQuery=true, Type=\"Text\", IsParameterQueryRequired=true]"
+      }
+    ],
+
+    "tables": [
+      {
+        "name": "TicketFact",
+        "columns": [
+          { "name": "TicketId", "dataType": "string", "sourceColumn": "TicketId", "isHidden": true },
+          { "name": "TicketNumber", "dataType": "string", "sourceColumn": "TicketNumber" },
+          { "name": "Title", "dataType": "string", "sourceColumn": "Title" },
+          { "name": "CategoryId", "dataType": "string", "sourceColumn": "CategoryId", "isHidden": true },
+          { "name": "SubcategoryId", "dataType": "string", "sourceColumn": "SubcategoryId", "isHidden": true },
+          { "name": "DepartmentId", "dataType": "string", "sourceColumn": "DepartmentId", "isHidden": true },
+          { "name": "RequestedById", "dataType": "string", "sourceColumn": "RequestedById", "isHidden": true },
+          { "name": "AssignedToId", "dataType": "string", "sourceColumn": "AssignedToId", "isHidden": true },
+          { "name": "Priority", "dataType": "int64", "sourceColumn": "Priority" },
+          { "name": "Status", "dataType": "int64", "sourceColumn": "Status" },
+          { "name": "Impact", "dataType": "int64", "sourceColumn": "Impact" },
+          { "name": "Urgency", "dataType": "int64", "sourceColumn": "Urgency" },
+          { "name": "Source", "dataType": "int64", "sourceColumn": "Source" },
+          { "name": "SLABreached", "dataType": "boolean", "sourceColumn": "SLABreached" },
+          { "name": "SatisfactionRating", "dataType": "int64", "sourceColumn": "SatisfactionRating" },
+          { "name": "CreatedOn", "dataType": "dateTime", "sourceColumn": "CreatedOn" },
+          { "name": "ResolvedOn", "dataType": "dateTime", "sourceColumn": "ResolvedOn" },
+          { "name": "DueDate", "dataType": "dateTime", "sourceColumn": "DueDate" },
+          { "name": "FirstResponseAt", "dataType": "dateTime", "sourceColumn": "FirstResponseAt" },
+          { "name": "ResolutionMinutes", "dataType": "int64", "sourceColumn": "ResolutionMinutes" },
+          { "name": "FirstResponseMinutes", "dataType": "int64", "sourceColumn": "FirstResponseMinutes" },
+          { "name": "IsOverdue", "dataType": "boolean", "sourceColumn": "IsOverdue" },
+          { "name": "CreatedDateKey", "dataType": "int64", "sourceColumn": "CreatedDateKey", "isHidden": true },
+          { "name": "ResolvedDateKey", "dataType": "int64", "sourceColumn": "ResolvedDateKey", "isHidden": true },
+          {
+            "name": "PriorityLabel",
+            "dataType": "string",
+            "isDataTypeInferred": false,
+            "expression": "SWITCH([Priority], 1, \"Critical\", 2, \"High\", 3, \"Medium\", 4, \"Low\", \"Unknown\")",
+            "type": "calculated"
+          },
+          {
+            "name": "StatusLabel",
+            "dataType": "string",
+            "isDataTypeInferred": false,
+            "expression": "SWITCH([Status], 1, \"New\", 2, \"Assigned\", 3, \"In Progress\", 4, \"Waiting on Requester\", 5, \"Waiting on Third Party\", 6, \"Resolved\", 7, \"Closed\", 8, \"Cancelled\", \"Unknown\")",
+            "type": "calculated"
+          },
+          {
+            "name": "SourceLabel",
+            "dataType": "string",
+            "isDataTypeInferred": false,
+            "expression": "SWITCH([Source], 1, \"Portal\", 2, \"Email\", 3, \"Teams Bot\", 4, \"Phone\", 5, \"Walk-up\", \"Unknown\")",
+            "type": "calculated"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "TicketFact",
+            "mode": "directQuery",
+            "source": {
+              "type": "m",
+              "expression": "let\n    Source = Sql.Database(AzureSqlServer, AzureSqlDatabase),\n    dbo_TicketFact = Source{[Schema=\"dbo\",Item=\"TicketFact\"]}[Data]\nin\n    dbo_TicketFact"
+            }
+          }
+        ]
+      },
+      {
+        "name": "DateDim",
+        "columns": [
+          { "name": "DateKey", "dataType": "int64", "sourceColumn": "DateKey", "isHidden": true },
+          { "name": "FullDate", "dataType": "dateTime", "sourceColumn": "FullDate" },
+          { "name": "DayOfWeek", "dataType": "int64", "sourceColumn": "DayOfWeek" },
+          { "name": "DayName", "dataType": "string", "sourceColumn": "DayName" },
+          { "name": "MonthNumber", "dataType": "int64", "sourceColumn": "MonthNumber" },
+          { "name": "MonthName", "dataType": "string", "sourceColumn": "MonthName", "sortByColumn": "MonthNumber" },
+          { "name": "Quarter", "dataType": "int64", "sourceColumn": "Quarter" },
+          { "name": "Year", "dataType": "int64", "sourceColumn": "Year" },
+          { "name": "IsBusinessDay", "dataType": "boolean", "sourceColumn": "IsBusinessDay" },
+          { "name": "IsWeekend", "dataType": "boolean", "sourceColumn": "IsWeekend" },
+          { "name": "FiscalYear", "dataType": "int64", "sourceColumn": "FiscalYear" },
+          { "name": "FiscalQuarter", "dataType": "int64", "sourceColumn": "FiscalQuarter" },
+          {
+            "name": "YearMonth",
+            "dataType": "string",
+            "isDataTypeInferred": false,
+            "expression": "FORMAT([FullDate], \"YYYY-MM\")",
+            "type": "calculated"
+          }
+        ],
+        "partitions": [
+          {
+            "name": "DateDim",
+            "mode": "directQuery",
+            "source": {
+              "type": "m",
+              "expression": "let\n    Source = Sql.Database(AzureSqlServer, AzureSqlDatabase),\n    dbo_DateDim = Source{[Schema=\"dbo\",Item=\"DateDim\"]}[Data]\nin\n    dbo_DateDim"
+            }
+          }
+        ]
+      },
+      {
+        "name": "CategoryDim",
+        "columns": [
+          { "name": "CategoryId", "dataType": "string", "sourceColumn": "CategoryId", "isHidden": true },
+          { "name": "CategoryName", "dataType": "string", "sourceColumn": "CategoryName" },
+          { "name": "IsActive", "dataType": "boolean", "sourceColumn": "IsActive" }
+        ],
+        "partitions": [
+          {
+            "name": "CategoryDim",
+            "mode": "directQuery",
+            "source": {
+              "type": "m",
+              "expression": "let\n    Source = Sql.Database(AzureSqlServer, AzureSqlDatabase),\n    dbo_CategoryDim = Source{[Schema=\"dbo\",Item=\"CategoryDim\"]}[Data]\nin\n    dbo_CategoryDim"
+            }
+          }
+        ]
+      },
+      {
+        "name": "SubcategoryDim",
+        "columns": [
+          { "name": "SubcategoryId", "dataType": "string", "sourceColumn": "SubcategoryId", "isHidden": true },
+          { "name": "SubcategoryName", "dataType": "string", "sourceColumn": "SubcategoryName" },
+          { "name": "CategoryId", "dataType": "string", "sourceColumn": "CategoryId", "isHidden": true },
+          { "name": "IsActive", "dataType": "boolean", "sourceColumn": "IsActive" }
+        ],
+        "partitions": [
+          {
+            "name": "SubcategoryDim",
+            "mode": "directQuery",
+            "source": {
+              "type": "m",
+              "expression": "let\n    Source = Sql.Database(AzureSqlServer, AzureSqlDatabase),\n    dbo_SubcategoryDim = Source{[Schema=\"dbo\",Item=\"SubcategoryDim\"]}[Data]\nin\n    dbo_SubcategoryDim"
+            }
+          }
+        ]
+      },
+      {
+        "name": "DepartmentDim",
+        "columns": [
+          { "name": "DepartmentId", "dataType": "string", "sourceColumn": "DepartmentId", "isHidden": true },
+          { "name": "DepartmentName", "dataType": "string", "sourceColumn": "DepartmentName" },
+          { "name": "ManagerName", "dataType": "string", "sourceColumn": "ManagerName" },
+          { "name": "CostCenter", "dataType": "string", "sourceColumn": "CostCenter" }
+        ],
+        "partitions": [
+          {
+            "name": "DepartmentDim",
+            "mode": "directQuery",
+            "source": {
+              "type": "m",
+              "expression": "let\n    Source = Sql.Database(AzureSqlServer, AzureSqlDatabase),\n    dbo_DepartmentDim = Source{[Schema=\"dbo\",Item=\"DepartmentDim\"]}[Data]\nin\n    dbo_DepartmentDim"
+            }
+          }
+        ]
+      },
+      {
+        "name": "AgentDim",
+        "columns": [
+          { "name": "AgentId", "dataType": "string", "sourceColumn": "AgentId", "isHidden": true },
+          { "name": "DisplayName", "dataType": "string", "sourceColumn": "DisplayName" },
+          { "name": "Email", "dataType": "string", "sourceColumn": "Email" },
+          { "name": "TeamName", "dataType": "string", "sourceColumn": "TeamName" },
+          { "name": "BusinessUnit", "dataType": "string", "sourceColumn": "BusinessUnit" },
+          { "name": "IsActive", "dataType": "boolean", "sourceColumn": "IsActive" }
+        ],
+        "partitions": [
+          {
+            "name": "AgentDim",
+            "mode": "directQuery",
+            "source": {
+              "type": "m",
+              "expression": "let\n    Source = Sql.Database(AzureSqlServer, AzureSqlDatabase),\n    dbo_AgentDim = Source{[Schema=\"dbo\",Item=\"AgentDim\"]}[Data]\nin\n    dbo_AgentDim"
+            }
+          }
+        ]
+      },
+      {
+        "name": "TicketVolumeDaily",
+        "columns": [
+          { "name": "DateKey", "dataType": "int64", "sourceColumn": "DateKey", "isHidden": true },
+          { "name": "CategoryId", "dataType": "string", "sourceColumn": "CategoryId", "isHidden": true },
+          { "name": "Priority", "dataType": "int64", "sourceColumn": "Priority" },
+          { "name": "TicketsCreated", "dataType": "int64", "sourceColumn": "TicketsCreated" },
+          { "name": "TicketsResolved", "dataType": "int64", "sourceColumn": "TicketsResolved" },
+          { "name": "TicketsBreached", "dataType": "int64", "sourceColumn": "TicketsBreached" },
+          { "name": "AvgResolutionMinutes", "dataType": "double", "sourceColumn": "AvgResolutionMinutes" }
+        ],
+        "partitions": [
+          {
+            "name": "TicketVolumeDaily",
+            "mode": "directQuery",
+            "source": {
+              "type": "m",
+              "expression": "let\n    Source = Sql.Database(AzureSqlServer, AzureSqlDatabase),\n    dbo_TicketVolumeDaily = Source{[Schema=\"dbo\",Item=\"TicketVolumeDaily\"]}[Data]\nin\n    dbo_TicketVolumeDaily"
+            }
+          }
+        ]
+      },
+      {
+        "name": "SLAComplianceMonthly",
+        "columns": [
+          { "name": "Year", "dataType": "int64", "sourceColumn": "Year" },
+          { "name": "Month", "dataType": "int64", "sourceColumn": "Month" },
+          { "name": "CategoryId", "dataType": "string", "sourceColumn": "CategoryId", "isHidden": true },
+          { "name": "TotalTickets", "dataType": "int64", "sourceColumn": "TotalTickets" },
+          { "name": "WithinSLA", "dataType": "int64", "sourceColumn": "WithinSLA" },
+          { "name": "Breached", "dataType": "int64", "sourceColumn": "Breached" },
+          { "name": "CompliancePct", "dataType": "double", "sourceColumn": "CompliancePct" }
+        ],
+        "partitions": [
+          {
+            "name": "SLAComplianceMonthly",
+            "mode": "directQuery",
+            "source": {
+              "type": "m",
+              "expression": "let\n    Source = Sql.Database(AzureSqlServer, AzureSqlDatabase),\n    dbo_SLAComplianceMonthly = Source{[Schema=\"dbo\",Item=\"SLAComplianceMonthly\"]}[Data]\nin\n    dbo_SLAComplianceMonthly"
+            }
+          }
+        ]
+      },
+      {
+        "name": "AgentPerformanceWeekly",
+        "columns": [
+          { "name": "Year", "dataType": "int64", "sourceColumn": "Year" },
+          { "name": "WeekNumber", "dataType": "int64", "sourceColumn": "WeekNumber" },
+          { "name": "AgentId", "dataType": "string", "sourceColumn": "AgentId", "isHidden": true },
+          { "name": "TicketsAssigned", "dataType": "int64", "sourceColumn": "TicketsAssigned" },
+          { "name": "TicketsResolved", "dataType": "int64", "sourceColumn": "TicketsResolved" },
+          { "name": "AvgResolutionMinutes", "dataType": "double", "sourceColumn": "AvgResolutionMinutes" },
+          { "name": "AvgSatisfaction", "dataType": "double", "sourceColumn": "AvgSatisfaction" },
+          { "name": "SLABreachCount", "dataType": "int64", "sourceColumn": "SLABreachCount" }
+        ],
+        "partitions": [
+          {
+            "name": "AgentPerformanceWeekly",
+            "mode": "directQuery",
+            "source": {
+              "type": "m",
+              "expression": "let\n    Source = Sql.Database(AzureSqlServer, AzureSqlDatabase),\n    dbo_AgentPerformanceWeekly = Source{[Schema=\"dbo\",Item=\"AgentPerformanceWeekly\"]}[Data]\nin\n    dbo_AgentPerformanceWeekly"
+            }
+          }
+        ]
+      },
+      {
+        "name": "_Measures",
+        "columns": [],
+        "measures": [
+          {
+            "name": "Total Tickets",
+            "expression": "COUNTROWS(TicketFact)"
+          },
+          {
+            "name": "Open Tickets",
+            "expression": "CALCULATE(\n    COUNTROWS(TicketFact),\n    TicketFact[Status] IN {1, 2, 3, 4, 5}\n)"
+          },
+          {
+            "name": "Resolved Tickets",
+            "expression": "CALCULATE(\n    COUNTROWS(TicketFact),\n    TicketFact[Status] = 6\n)"
+          },
+          {
+            "name": "Avg Resolution Hours",
+            "expression": "DIVIDE(\n    AVERAGE(TicketFact[ResolutionMinutes]),\n    60,\n    BLANK()\n)",
+            "formatString": "#,##0.0"
+          },
+          {
+            "name": "SLA Compliance %",
+            "expression": "VAR _Total = COUNTROWS(TicketFact)\nVAR _Breached = CALCULATE(COUNTROWS(TicketFact), TicketFact[SLABreached] = TRUE())\nRETURN\n    IF(\n        _Total > 0,\n        DIVIDE(_Total - _Breached, _Total) * 100,\n        BLANK()\n    )",
+            "formatString": "#,##0.0\"%\""
+          },
+          {
+            "name": "Avg Satisfaction",
+            "expression": "AVERAGE(TicketFact[SatisfactionRating])",
+            "formatString": "#,##0.00"
+          },
+          {
+            "name": "First Response SLA %",
+            "expression": "VAR _WithResponse = CALCULATE(\n    COUNTROWS(TicketFact),\n    NOT ISBLANK(TicketFact[FirstResponseAt])\n)\nVAR _OnTime = CALCULATE(\n    COUNTROWS(TicketFact),\n    NOT ISBLANK(TicketFact[FirstResponseAt]),\n    TicketFact[FirstResponseMinutes] <= 60\n)\nRETURN\n    IF(\n        _WithResponse > 0,\n        DIVIDE(_OnTime, _WithResponse) * 100,\n        BLANK()\n    )",
+            "formatString": "#,##0.0\"%\""
+          },
+          {
+            "name": "Tickets Trending (30-day)",
+            "expression": "VAR _Last30 = CALCULATE(\n    COUNTROWS(TicketFact),\n    DATESINPERIOD(DateDim[FullDate], TODAY(), -30, DAY)\n)\nVAR _Prior30 = CALCULATE(\n    COUNTROWS(TicketFact),\n    DATESINPERIOD(DateDim[FullDate], TODAY() - 30, -30, DAY)\n)\nRETURN\n    IF(\n        _Prior30 > 0,\n        DIVIDE(_Last30 - _Prior30, _Prior30) * 100,\n        BLANK()\n    )",
+            "formatString": "+#,##0.0\"%\";-#,##0.0\"%\";\"0.0%\""
+          }
+        ],
+        "partitions": [
+          {
+            "name": "_Measures",
+            "mode": "import",
+            "source": {
+              "type": "m",
+              "expression": "let\n    Source = #table(type table [], {})\nin\n    Source"
+            }
+          }
+        ],
+        "annotations": [
+          {
+            "name": "PBI_MeasuresTable",
+            "value": "true"
+          }
+        ]
+      }
+    ],
+
+    "relationships": [
+      {
+        "name": "TicketFact_CategoryDim",
+        "fromTable": "TicketFact",
+        "fromColumn": "CategoryId",
+        "toTable": "CategoryDim",
+        "toColumn": "CategoryId",
+        "crossFilteringBehavior": "singleDirection"
+      },
+      {
+        "name": "TicketFact_SubcategoryDim",
+        "fromTable": "TicketFact",
+        "fromColumn": "SubcategoryId",
+        "toTable": "SubcategoryDim",
+        "toColumn": "SubcategoryId",
+        "crossFilteringBehavior": "singleDirection"
+      },
+      {
+        "name": "TicketFact_DepartmentDim",
+        "fromTable": "TicketFact",
+        "fromColumn": "DepartmentId",
+        "toTable": "DepartmentDim",
+        "toColumn": "DepartmentId",
+        "crossFilteringBehavior": "singleDirection"
+      },
+      {
+        "name": "TicketFact_AgentDim",
+        "fromTable": "TicketFact",
+        "fromColumn": "AssignedToId",
+        "toTable": "AgentDim",
+        "toColumn": "AgentId",
+        "crossFilteringBehavior": "singleDirection"
+      },
+      {
+        "name": "TicketFact_DateDim_Created",
+        "fromTable": "TicketFact",
+        "fromColumn": "CreatedDateKey",
+        "toTable": "DateDim",
+        "toColumn": "DateKey",
+        "isActive": true,
+        "crossFilteringBehavior": "singleDirection"
+      },
+      {
+        "name": "TicketFact_DateDim_Resolved",
+        "fromTable": "TicketFact",
+        "fromColumn": "ResolvedDateKey",
+        "toTable": "DateDim",
+        "toColumn": "DateKey",
+        "isActive": false,
+        "crossFilteringBehavior": "singleDirection"
+      },
+      {
+        "name": "SubcategoryDim_CategoryDim",
+        "fromTable": "SubcategoryDim",
+        "fromColumn": "CategoryId",
+        "toTable": "CategoryDim",
+        "toColumn": "CategoryId",
+        "crossFilteringBehavior": "singleDirection"
+      },
+      {
+        "name": "TicketVolumeDaily_DateDim",
+        "fromTable": "TicketVolumeDaily",
+        "fromColumn": "DateKey",
+        "toTable": "DateDim",
+        "toColumn": "DateKey",
+        "crossFilteringBehavior": "singleDirection"
+      },
+      {
+        "name": "TicketVolumeDaily_CategoryDim",
+        "fromTable": "TicketVolumeDaily",
+        "fromColumn": "CategoryId",
+        "toTable": "CategoryDim",
+        "toColumn": "CategoryId",
+        "crossFilteringBehavior": "singleDirection"
+      },
+      {
+        "name": "SLAComplianceMonthly_CategoryDim",
+        "fromTable": "SLAComplianceMonthly",
+        "fromColumn": "CategoryId",
+        "toTable": "CategoryDim",
+        "toColumn": "CategoryId",
+        "crossFilteringBehavior": "singleDirection"
+      },
+      {
+        "name": "AgentPerformanceWeekly_AgentDim",
+        "fromTable": "AgentPerformanceWeekly",
+        "fromColumn": "AgentId",
+        "toTable": "AgentDim",
+        "toColumn": "AgentId",
+        "crossFilteringBehavior": "singleDirection"
+      }
+    ]
+  }
+}

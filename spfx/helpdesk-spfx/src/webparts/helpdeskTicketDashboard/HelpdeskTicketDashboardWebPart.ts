@@ -60,24 +60,11 @@ export default class HelpdeskTicketDashboardWebPart extends BaseClientSideWebPar
   }
 
   public render(): void {
-    // TODO: Replace with actual React component import once TicketDashboard component is built
-    const element = React.createElement("div", {}, [
-      React.createElement(
-        "h2",
-        { key: "title" },
-        "Help Desk - My Tickets"
-      ),
-      React.createElement(
-        "p",
-        { key: "status" },
-        `Connected to Dataverse: ${this.properties.dataverseUrl}`
-      ),
-      React.createElement(
-        "p",
-        { key: "config" },
-        `Showing up to ${this.properties.maxTickets} tickets`
-      ),
-    ]);
+    const { TicketDashboard } = require('./components/TicketDashboard');
+    const element = React.createElement(TicketDashboard, {
+      ticketService: this._ticketService,
+      userId: this.context.pageContext.legacyPageContext?.userId || '',
+    });
 
     ReactDom.render(element, this.domElement);
   }

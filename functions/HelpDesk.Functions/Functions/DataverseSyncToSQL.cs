@@ -31,7 +31,7 @@ public class DataverseSyncToSQL
 
         try
         {
-            await _syncService.SyncTicketsAsync();
+            await _syncService.SyncAllAsync();
         }
         catch (Exception ex)
         {

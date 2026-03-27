@@ -3,14 +3,27 @@
   "compilerOptions": {
     "target": "es2017",
     "jsx": "react",
+    "module": "esnext",
     "moduleResolution": "node",
     "lib": ["es2017", "dom"],
     "strict": true,
     "noImplicitAny": true,
+    "noUnusedLocals": false,
     "outDir": "lib",
     "rootDir": "src",
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "experimentalDecorators": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"]
+    }
   },
   "include": ["src/**/*.ts", "src/**/*.tsx"],
-  "exclude": ["node_modules", "lib"]
+  "exclude": ["node_modules", "lib", "dist"]
 }

@@ -1,0 +1,232 @@
+kind: AdaptiveDialog
+name: create-ticket
+displayName: Create a Support Ticket
+description: >
+  Guides the user through creating a new IT help desk ticket. Collects title,
+  description, and optionally runs AI classification to suggest a category.
+  Creates the ticket in Dataverse and returns the ticket number.
+
+triggerPhrases:
+  - "I need to create a ticket"
+  - "Submit a support request"
+  - "I have an IT issue"
+  - "Open a new ticket"
+  - "I need help with something"
+  - "Log a help desk ticket"
+  - "Report a problem"
+  - "Something is broken"
+
+variables:
+  - name: varTicketTitle
+    type: String
+    description: Brief summary of the issue
+  - name: varTicketDescription
+    type: String
+    description: Detailed description of the issue
+  - name: varCategoryName
+    type: String
+    description: AI-suggested or user-selected category name
+  - name: varCategoryId
+    type: String
+    description: Dataverse GUID of the selected category
+  - name: varSubcategoryName
+    type: String
+    description: AI-suggested or user-selected subcategory name
+  - name: varSubcategoryId
+    type: String
+    description: Dataverse GUID of the selected subcategory
+  - name: varConfidence
+    type: Number
+    description: AI classification confidence score (0.0 to 1.0)
+  - name: varTicketNumber
+    type: String
+    description: Auto-number assigned to the created ticket (e.g., TKT-000042)
+  - name: varUrgency
+    type: String
+    description: User-selected urgency level
+
+actions:
+  # Step 1: Greet and ask for title
+  - kind: SendMessage
+    message: >
+      I will help you create a support ticket. Let me gather some details.
+
+  - kind: AskQuestion
+    question: "What is a brief summary of your issue? (one sentence)"
+    variable: varTicketTitle
+    validation:
+      type: String
+      minLength: 5
+      maxLength: 200
+      errorMessage: "Please provide a summary between 5 and 200 characters."
+
+  # Step 2: Ask for detailed description
+  - kind: AskQuestion
+    question: >
+      Thanks. Now please describe the issue in more detail. Include what you
+      were doing when the problem occurred, any error messages, and how it
+      affects your work.
+    variable: varTicketDescription
+    validation:
+      type: String
+      minLength: 10
+      errorMessage: "Please provide more detail so our team can help you effectively."
+
+  # Step 3: Call ClassifyTicket AI function
+  - kind: InvokeFlowAction
+    flowName: HD - Classify Ticket (Copilot)
+    description: >
+      Calls the ClassifyTicket Azure Function via Power Automate to suggest
+      a category and subcategory based on the title and description.
+    inputs:
+      title: "=varTicketTitle"
+      description: "=varTicketDescription"
+    outputs:
+      - name: suggestedCategory
+        variable: varCategoryName
+      - name: suggestedCategoryId
+        variable: varCategoryId
+      - name: suggestedSubcategory
+        variable: varSubcategoryName
+      - name: suggestedSubcategoryId
+        variable: varSubcategoryId
+      - name: confidence
+        variable: varConfidence
+
+  # Step 4: Confirm or override AI suggestion
+  - kind: Condition
+    condition: "=varConfidence >= 0.7"
+    actions:
+      # High confidence -- confirm with user
+      - kind: AskQuestion
+        question: >
+          Based on your description, I think this falls under
+          **{varCategoryName} > {varSubcategoryName}**.
+          Is that correct?
+        variable: varUserConfirmed
+        choices:
+          - "Yes, that's correct"
+          - "No, let me choose"
+    elseActions:
+      # Low confidence -- ask user to pick
+      - kind: SendMessage
+        message: >
+          I was not confident enough to auto-categorize this. Let me show you
+          the available categories.
+      - kind: SetVariable
+        variable: varUserConfirmed
+        value: "No, let me choose"
+
+  # Step 5: Manual category selection (if needed)
+  - kind: Condition
+    condition: "=varUserConfirmed = 'No, let me choose'"
+    actions:
+      - kind: InvokeFlowAction
+        flowName: HD - Get Active Categories
+        description: Retrieves active categories from Dataverse.
+        outputs:
+          - name: categories
+            variable: varCategoryList
+
+      - kind: AskQuestion
+        question: "Which category best describes your issue?"
+        variable: varCategoryName
+        choices:
+          - "Hardware"
+          - "Software"
+          - "Network & Connectivity"
+          - "Access & Permissions"
+          - "Email & Communication"
+
+      - kind: InvokeFlowAction
+        flowName: HD - Get Subcategories By Category
+        description: Retrieves active subcategories filtered by the selected category.
+        inputs:
+          categoryName: "=varCategoryName"
+        outputs:
+          - name: subcategories
+            variable: varSubcategoryList
+          - name: categoryId
+            variable: varCategoryId
+
+      - kind: AskQuestion
+        question: "Which subcategory fits best?"
+        variable: varSubcategoryName
+        dynamicChoices: "=varSubcategoryList"
+
+      - kind: InvokeFlowAction
+        flowName: HD - Get Subcategory Id
+        inputs:
+          subcategoryName: "=varSubcategoryName"
+          categoryId: "=varCategoryId"
+        outputs:
+          - name: subcategoryId
+            variable: varSubcategoryId
+
+  # Step 6: Ask urgency
+  - kind: AskQuestion
+    question: "How urgent is this issue?"
+    variable: varUrgency
+    choices:
+      - "Critical -- work is completely blocked"
+      - "High -- significant impact but workaround exists"
+      - "Medium -- inconvenient but can work around it"
+      - "Low -- minor issue or enhancement request"
+
+  # Step 7: Confirm and create
+  - kind: SendMessage
+    message: |
+      Here is a summary of your ticket:
+
+      **Title:** {varTicketTitle}
+      **Category:** {varCategoryName} > {varSubcategoryName}
+      **Urgency:** {varUrgency}
+
+      **Description:**
+      {varTicketDescription}
+
+  - kind: AskQuestion
+    question: "Shall I submit this ticket?"
+    variable: varConfirmSubmit
+    choices:
+      - "Yes, submit it"
+      - "No, cancel"
+
+  - kind: Condition
+    condition: "=varConfirmSubmit = 'No, cancel'"
+    actions:
+      - kind: SendMessage
+        message: "No problem. Your ticket has not been created. Let me know if you need anything else."
+      - kind: EndDialog
+    elseActions: []
+
+  # Step 8: Create the ticket in Dataverse
+  - kind: InvokeFlowAction
+    flowName: HD - Create Ticket From Bot
+    description: >
+      Creates a new hd_ticket row in Dataverse with the collected information.
+      Sets hd_source = 3 (Teams Bot) and hd_requestedby to the calling user.
+    inputs:
+      title: "=varTicketTitle"
+      description: "=varTicketDescription"
+      categoryId: "=varCategoryId"
+      subcategoryId: "=varSubcategoryId"
+      urgency: "=varUrgency"
+    outputs:
+      - name: ticketNumber
+        variable: varTicketNumber
+
+  # Step 9: Confirm creation
+  - kind: SendMessage
+    message: |
+      Your ticket has been created successfully!
+
+      **Ticket Number:** {varTicketNumber}
+
+      Our IT team will review your ticket shortly. You will receive a Teams
+      notification when it is assigned to an agent.
+
+      You can check the status anytime by saying "Check ticket status" or
+      by visiting the [Help Desk Portal]({System.EnvironmentVariable.hd_ModelDrivenAppUrl}).
+
+  - kind: EndDialog
