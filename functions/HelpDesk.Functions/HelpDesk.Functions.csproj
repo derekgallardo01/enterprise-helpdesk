@@ -25,14 +25,14 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="host.json">
+    <Content Include="host.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-    </None>
-    <None Update="local.settings.json" Condition="Exists('local.settings.json')">
+    </Content>
+    <Content Include="local.settings.json" Condition="Exists('local.settings.json')">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <CopyToPublishDirectory>Never</CopyToPublishDirectory>
-    </None>
+    </Content>
   </ItemGroup>
 
 </Project>
