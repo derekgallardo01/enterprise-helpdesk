@@ -1,0 +1,68 @@
+graph TB
+    subgraph Users["End Users"]
+        Browser["🌐 Browser"]
+        Teams["💬 Microsoft Teams"]
+        Email["📧 Email"]
+    end
+
+    subgraph Frontend["Frontend Layer"]
+        SPFx["SPFx Web Parts<br/>React 18 + Fluent UI v9<br/><i>Ticket Dashboard, KB Search, ACE</i>"]
+        MDA["Model-Driven App<br/>IT Help Desk - Agent Console<br/><i>Ticket triage, assignment, resolution</i>"]
+        Canvas["Canvas App<br/>Employee Self-Service Portal<br/><i>Submit tickets, track status</i>"]
+        Bot["Copilot Studio Bot<br/>IT Help Desk Assistant<br/><i>Natural language ticket creation</i>"]
+    end
+
+    subgraph Data["Data Layer (Three-Store Architecture)"]
+        DV["☁️ Dataverse<br/>OLTP — Tickets, Assets, SLAs<br/><i>Row-level security, 8 tables, 25+ tickets</i>"]
+        SP["📄 SharePoint Online<br/>Content — KB Articles, SOPs<br/><i>Versioning, Microsoft Search</i>"]
+        SQL["🗄️ Azure SQL<br/>OLAP — Star Schema<br/><i>1 fact + 4 dims + 3 agg tables</i>"]
+    end
+
+    subgraph Backend["Backend Layer"]
+        Func["⚡ Azure Functions (.NET 9)<br/>7 Endpoints<br/><i>EmailToTicket, SyncToSQL, GraphSync,<br/>WebhookReceiver, HealthCheck,<br/>ClassifyTicket, SuggestResponse</i>"]
+        PA["🔄 Power Automate<br/>Cloud Flows<br/><i>Ticket Routing, SLA Escalation,<br/>Notifications</i>"]
+    end
+
+    subgraph Analytics["Analytics Layer"]
+        PBI["📊 Power BI<br/>DirectQuery to Azure SQL<br/><i>SLA Compliance, Agent Performance,<br/>Executive Dashboard</i>"]
+    end
+
+    subgraph Infra["Infrastructure"]
+        KV["🔑 Key Vault"]
+        AI["📡 App Insights"]
+        AOAI["🤖 Azure OpenAI<br/>GPT-4o-mini"]
+    end
+
+    Browser --> SPFx
+    Browser --> MDA
+    Browser --> Canvas
+    Teams --> Bot
+    Email --> Func
+
+    SPFx --> DV
+    MDA --> DV
+    Canvas --> DV
+    Bot --> DV
+    Bot --> AOAI
+
+    PA --> DV
+    Func --> DV
+    Func --> SQL
+    Func --> AOAI
+    Func --> KV
+    Func --> AI
+
+    DV --> PA
+    SQL --> PBI
+
+    classDef frontend fill:#4a90d9,stroke:#2c5f8a,color:#fff
+    classDef data fill:#27ae60,stroke:#1e8449,color:#fff
+    classDef backend fill:#8e44ad,stroke:#6c3483,color:#fff
+    classDef analytics fill:#e67e22,stroke:#d35400,color:#fff
+    classDef infra fill:#95a5a6,stroke:#7f8c8d,color:#fff
+
+    class SPFx,MDA,Canvas,Bot frontend
+    class DV,SP,SQL data
+    class Func,PA backend
+    class PBI analytics
+    class KV,AI,AOAI infra

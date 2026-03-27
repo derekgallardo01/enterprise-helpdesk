@@ -1,0 +1,38 @@
+flowchart LR
+    subgraph Sources["Ticket Sources"]
+        Portal["Self-Service Portal"]
+        EmailIn["Email<br/>helpdesk@contoso.com"]
+        TeamsBot["Teams Bot"]
+        Webhook["ServiceNow / Jira<br/>Webhooks"]
+    end
+
+    subgraph Processing["Processing"]
+        PA["Power Automate<br/>Routing & SLA"]
+        EmailFunc["EmailToTicket<br/>Azure Function"]
+        WebhookFunc["WebhookReceiver<br/>Azure Function"]
+        ClassifyFunc["ClassifyTicket<br/>Azure Function"]
+    end
+
+    subgraph Storage["Storage"]
+        DV["Dataverse<br/>(Source of Truth)"]
+        SQL["Azure SQL<br/>(Reporting)"]
+    end
+
+    subgraph Output["Output"]
+        App["Agent Console"]
+        PBI["Power BI<br/>Dashboards"]
+        Notify["Teams<br/>Notifications"]
+    end
+
+    Portal -->|Create ticket| DV
+    EmailIn -->|Parse & create| EmailFunc --> DV
+    TeamsBot -->|AI classify| ClassifyFunc --> DV
+    Webhook -->|Map & create| WebhookFunc --> DV
+
+    DV -->|Trigger| PA
+    PA -->|Route & notify| DV
+    PA --> Notify
+
+    DV -->|Delta sync<br/>every 15 min| SQL
+    SQL --> PBI
+    DV --> App

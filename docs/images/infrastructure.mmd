@@ -1,0 +1,29 @@
+graph LR
+    subgraph RG["Resource Group: helpdesk-rg (centralus)"]
+        Func["⚡ Function App<br/>helpdesk-func-dev-*<br/><i>Consumption plan, .NET 9</i>"]
+        SQL["🗄️ SQL Server<br/>helpdesk-sql-dev-*<br/><i>Basic tier, Entra-only auth</i>"]
+        DB["💾 SQL Database<br/>helpdesk-reporting<br/><i>Star schema, 4018 DateDim rows</i>"]
+        KV["🔑 Key Vault<br/>helpdeskkvdev*<br/><i>Secrets, certificates</i>"]
+        AI["📡 App Insights<br/>helpdesk-ai-dev<br/><i>Telemetry, logging</i>"]
+        LA["📋 Log Analytics<br/>helpdesk-logs-dev<br/><i>Centralized logs</i>"]
+        ST["📦 Storage Account<br/>hdstdev*<br/><i>Function App state</i>"]
+        Plan["📐 App Service Plan<br/>Consumption (Y1)<br/><i>Pay-per-execution</i>"]
+    end
+
+    Func --> SQL
+    Func --> KV
+    Func --> AI
+    SQL --> DB
+    AI --> LA
+    Func --> Plan
+    Func --> ST
+
+    subgraph External["External Services"]
+        DV["Dataverse<br/>org2d0673ab.crm.dynamics.com"]
+        Graph["Microsoft Graph API"]
+        AOAI["Azure OpenAI"]
+    end
+
+    Func -->|S2S Auth| DV
+    Func -->|App permissions| Graph
+    Func -->|Managed Identity| AOAI

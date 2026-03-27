@@ -1,0 +1,28 @@
+graph LR
+    subgraph Dev["Development"]
+        Code["VS Code / IDE"]
+        Git["Git Commit"]
+    end
+
+    subgraph CI["GitHub Actions"]
+        Build["Build & Test"]
+        Package["Package"]
+    end
+
+    subgraph Deploy["Deployment"]
+        Staging["Staging Slot"]
+        Prod["Production"]
+    end
+
+    Code --> Git --> Build --> Package
+    Package -->|"Functions: zip deploy"| Staging -->|"Slot swap"| Prod
+    Package -->|"SPFx: .sppkg"| AppCat["SharePoint<br/>App Catalog"]
+    Package -->|"Dataverse: managed solution"| PProd["Power Platform<br/>Production"]
+
+    subgraph Environments["Power Platform ALM"]
+        PPDev["Dev<br/>(Unmanaged)"]
+        PPTest["Test<br/>(Managed)"]
+        PPProd2["Prod<br/>(Managed, locked)"]
+    end
+
+    PPDev -->|"Export"| PPTest -->|"Import"| PPProd2
