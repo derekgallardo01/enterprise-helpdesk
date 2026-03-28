@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1400, initial-scale=1">
+<title>Contoso IT Help Desk – Power BI Dashboard</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif; background: #f0f0f0; color: #323130; font-size: 14px; line-height: 1.5; }
+
+  /* === Power BI Top Bar === */
+  .pbi-topbar { background: #f2c811; height: 40px; display: flex; align-items: center; padding: 0 16px; }
+  .pbi-topbar .pbi-logo { font-weight: 700; font-size: 15px; color: #323130; display: flex; align-items: center; gap: 6px; }
+  .pbi-topbar .pbi-logo-icon { width: 22px; height: 22px; background: #323130; border-radius: 3px; display: flex; align-items: center; justify-content: center; color: #f2c811; font-size: 12px; font-weight: 800; }
+  .pbi-topbar .spacer { flex: 1; }
+  .pbi-topbar .pbi-actions { display: flex; gap: 12px; font-size: 13px; color: #323130; }
+  .pbi-topbar .pbi-actions span { cursor: pointer; padding: 4px 8px; border-radius: 4px; }
+  .pbi-topbar .pbi-actions span:hover { background: rgba(0,0,0,0.08); }
+
+  /* === Report Header === */
+  .report-header { background: #fff; border-bottom: 1px solid #e0e0e0; padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; }
+  .report-header h1 { font-size: 20px; font-weight: 600; color: #323130; }
+  .report-tabs { display: flex; gap: 0; }
+  .report-tabs .tab { padding: 8px 20px; font-size: 13px; color: #605e5c; cursor: pointer; border-bottom: 3px solid transparent; }
+  .report-tabs .tab.active { color: #323130; font-weight: 600; border-bottom-color: #f2c811; }
+  .report-tabs .tab:hover { background: #f5f5f5; }
+
+  /* === Slicers Bar === */
+  .slicers { background: #fff; padding: 10px 24px; display: flex; gap: 16px; align-items: center; border-bottom: 1px solid #edebe9; }
+  .slicer-label { font-size: 12px; font-weight: 600; color: #605e5c; margin-right: 4px; }
+  .slicer select, .slicer input { font-family: 'Segoe UI', sans-serif; font-size: 13px; padding: 4px 8px; border: 1px solid #c8c6c4; border-radius: 3px; background: #fff; color: #323130; }
+  .slicer { display: flex; align-items: center; gap: 4px; }
+
+  /* === Dashboard Canvas === */
+  .dashboard { padding: 20px 24px; display: flex; flex-direction: column; gap: 16px; }
+
+  /* === KPI Row === */
+  .kpi-row { display: flex; gap: 12px; }
+  .kpi { flex: 1; background: #fff; border-radius: 6px; padding: 16px 20px; border: 1px solid #e8e8e8; text-align: center; }
+  .kpi .kpi-value { font-size: 32px; font-weight: 700; line-height: 1.1; }
+  .kpi .kpi-label { font-size: 11px; color: #605e5c; margin-top: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .kpi .kpi-trend { font-size: 12px; margin-top: 4px; }
+  .kpi .kpi-trend.up { color: #107c10; }
+  .kpi .kpi-trend.down { color: #d13438; }
+  .kpi .kpi-trend.neutral { color: #605e5c; }
+  .kpi-blue .kpi-value { color: #0078d4; }
+  .kpi-green .kpi-value { color: #107c10; }
+  .kpi-orange .kpi-value { color: #d83b01; }
+  .kpi-red .kpi-value { color: #d13438; }
+  .kpi-purple .kpi-value { color: #5c2d91; }
+  .kpi-teal .kpi-value { color: #008272; }
+
+  /* === Chart Row === */
+  .chart-row { display: flex; gap: 12px; }
+  .chart-card { background: #fff; border-radius: 6px; border: 1px solid #e8e8e8; padding: 16px; flex: 1; }
+  .chart-card h3 { font-size: 14px; font-weight: 600; color: #323130; margin-bottom: 12px; }
+  .chart-card.wide { flex: 2; }
+
+  /* === SVG Chart Styles === */
+  .bar { rx: 2; }
+  .axis-label { font-size: 11px; fill: #605e5c; font-family: 'Segoe UI', sans-serif; }
+  .axis-line { stroke: #edebe9; stroke-width: 1; }
+  .grid-line { stroke: #f3f2f1; stroke-width: 1; stroke-dasharray: 3,3; }
+  .chart-legend { display: flex; gap: 16px; margin-top: 8px; flex-wrap: wrap; }
+  .legend-item { display: flex; align-items: center; gap: 4px; font-size: 11px; color: #605e5c; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 2px; }
+
+  /* === Donut/Pie === */
+  .donut-legend { margin-top: 8px; }
+  .donut-legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #323130; margin-bottom: 4px; }
+  .donut-legend-dot { width: 12px; height: 12px; border-radius: 50%; }
+  .donut-legend-val { margin-left: auto; font-weight: 600; }
+
+  /* === Table Visual === */
+  .pbi-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .pbi-table thead th { text-align: left; font-weight: 600; color: #605e5c; padding: 8px 10px; border-bottom: 2px solid #edebe9; font-size: 12px; }
+  .pbi-table tbody td { padding: 7px 10px; border-bottom: 1px solid #f3f2f1; color: #323130; }
+  .pbi-table tbody tr:hover { background: #f9f9f9; }
+  .heatbar { height: 6px; border-radius: 3px; background: #deecf9; display: inline-block; vertical-align: middle; margin-left: 6px; }
+
+  /* === Gauge Visual === */
+  .gauge-container { text-align: center; }
+  .gauge-value { font-size: 28px; font-weight: 700; margin-top: -4px; }
+  .gauge-target { font-size: 11px; color: #605e5c; }
+</style>
+</head>
+<body>
+
+<!-- Power BI Top Bar -->
+<div class="pbi-topbar">
+  <div class="pbi-logo">
+    <div class="pbi-logo-icon">P</div>
+    Power BI
+  </div>
+  <span class="spacer"></span>
+  <div class="pbi-actions">
+    <span>Edit</span>
+    <span>Share</span>
+    <span>Export</span>
+    <span>⋯</span>
+  </div>
+</div>
+
+<!-- Report Header -->
+<div class="report-header">
+  <h1>IT Help Desk — Operations Dashboard</h1>
+  <div class="report-tabs">
+    <div class="tab active">Ticket Volume</div>
+    <div class="tab">SLA Compliance</div>
+    <div class="tab">Agent Performance</div>
+    <div class="tab">Satisfaction</div>
+  </div>
+</div>
+
+<!-- Slicers -->
+<div class="slicers">
+  <div class="slicer">
+    <span class="slicer-label">Date Range:</span>
+    <input type="text" value="Mar 1, 2026 – Mar 28, 2026" style="width:200px" readonly />
+  </div>
+  <div class="slicer">
+    <span class="slicer-label">Category:</span>
+    <select><option>All Categories</option></select>
+  </div>
+  <div class="slicer">
+    <span class="slicer-label">Department:</span>
+    <select><option>All Departments</option></select>
+  </div>
+  <div class="slicer">
+    <span class="slicer-label">Agent:</span>
+    <select><option>All Agents</option></select>
+  </div>
+</div>
+
+<!-- Dashboard -->
+<div class="dashboard">
+
+  <!-- KPI Row -->
+  <div class="kpi-row">
+    <div class="kpi kpi-blue">
+      <div class="kpi-value">247</div>
+      <div class="kpi-label">Total Tickets</div>
+      <div class="kpi-trend up">▲ 12% vs last month</div>
+    </div>
+    <div class="kpi kpi-orange">
+      <div class="kpi-value">38</div>
+      <div class="kpi-label">Open Tickets</div>
+      <div class="kpi-trend down">▲ 5 from yesterday</div>
+    </div>
+    <div class="kpi kpi-green">
+      <div class="kpi-value">189</div>
+      <div class="kpi-label">Resolved</div>
+      <div class="kpi-trend up">▲ 18% vs last month</div>
+    </div>
+    <div class="kpi kpi-purple">
+      <div class="kpi-value">6.2h</div>
+      <div class="kpi-label">Avg Resolution</div>
+      <div class="kpi-trend up">▼ 1.4h improvement</div>
+    </div>
+    <div class="kpi kpi-teal">
+      <div class="kpi-value">92.3%</div>
+      <div class="kpi-label">SLA Compliance</div>
+      <div class="kpi-trend neutral">Target: 95%</div>
+    </div>
+    <div class="kpi kpi-blue">
+      <div class="kpi-value">4.2</div>
+      <div class="kpi-label">Avg Satisfaction</div>
+      <div class="kpi-trend up">▲ 0.3 vs last month</div>
+    </div>
+  </div>
+
+  <!-- Chart Row 1 -->
+  <div class="chart-row">
+
+    <!-- Ticket Volume Trend (Line Chart) -->
+    <div class="chart-card wide">
+      <h3>Ticket Volume Trend</h3>
+      <svg width="100%" height="200" viewBox="0 0 640 200">
+        <!-- Grid lines -->
+        <line x1="40" y1="20" x2="620" y2="20" class="grid-line"/>
+        <line x1="40" y1="60" x2="620" y2="60" class="grid-line"/>
+        <line x1="40" y1="100" x2="620" y2="100" class="grid-line"/>
+        <line x1="40" y1="140" x2="620" y2="140" class="grid-line"/>
+        <line x1="40" y1="180" x2="620" y2="180" class="axis-line"/>
+        <!-- Y axis labels -->
+        <text x="32" y="24" class="axis-label" text-anchor="end">40</text>
+        <text x="32" y="64" class="axis-label" text-anchor="end">30</text>
+        <text x="32" y="104" class="axis-label" text-anchor="end">20</text>
+        <text x="32" y="144" class="axis-label" text-anchor="end">10</text>
+        <text x="32" y="184" class="axis-label" text-anchor="end">0</text>
+        <!-- X axis labels -->
+        <text x="80" y="196" class="axis-label" text-anchor="middle">Wk 1</text>
+        <text x="220" y="196" class="axis-label" text-anchor="middle">Wk 2</text>
+        <text x="360" y="196" class="axis-label" text-anchor="middle">Wk 3</text>
+        <text x="500" y="196" class="axis-label" text-anchor="middle">Wk 4</text>
+        <!-- Created line (blue) -->
+        <polyline points="80,80 160,60 240,72 320,52 400,68 480,56 560,44" fill="none" stroke="#0078d4" stroke-width="2.5" stroke-linejoin="round"/>
+        <circle cx="80" cy="80" r="4" fill="#0078d4"/>
+        <circle cx="160" cy="60" r="4" fill="#0078d4"/>
+        <circle cx="240" cy="72" r="4" fill="#0078d4"/>
+        <circle cx="320" cy="52" r="4" fill="#0078d4"/>
+        <circle cx="400" cy="68" r="4" fill="#0078d4"/>
+        <circle cx="480" cy="56" r="4" fill="#0078d4"/>
+        <circle cx="560" cy="44" r="4" fill="#0078d4"/>
+        <!-- Resolved line (green) -->
+        <polyline points="80,92 160,76 240,64 320,60 400,56 480,48 560,52" fill="none" stroke="#107c10" stroke-width="2.5" stroke-linejoin="round"/>
+        <circle cx="80" cy="92" r="4" fill="#107c10"/>
+        <circle cx="160" cy="76" r="4" fill="#107c10"/>
+        <circle cx="240" cy="64" r="4" fill="#107c10"/>
+        <circle cx="320" cy="60" r="4" fill="#107c10"/>
+        <circle cx="400" cy="56" r="4" fill="#107c10"/>
+        <circle cx="480" cy="48" r="4" fill="#107c10"/>
+        <circle cx="560" cy="52" r="4" fill="#107c10"/>
+      </svg>
+      <div class="chart-legend">
+        <div class="legend-item"><div class="legend-dot" style="background:#0078d4"></div> Created</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#107c10"></div> Resolved</div>
+      </div>
+    </div>
+
+    <!-- Tickets by Category (Donut) -->
+    <div class="chart-card">
+      <h3>Tickets by Category</h3>
+      <svg width="180" height="180" viewBox="0 0 180 180" style="display:block;margin:0 auto">
+        <!-- Donut segments -->
+        <circle cx="90" cy="90" r="70" fill="none" stroke="#0078d4" stroke-width="28" stroke-dasharray="110 330" stroke-dashoffset="0" transform="rotate(-90 90 90)"/>
+        <circle cx="90" cy="90" r="70" fill="none" stroke="#5c2d91" stroke-width="28" stroke-dasharray="88 352" stroke-dashoffset="-110" transform="rotate(-90 90 90)"/>
+        <circle cx="90" cy="90" r="70" fill="none" stroke="#107c10" stroke-width="28" stroke-dasharray="77 363" stroke-dashoffset="-198" transform="rotate(-90 90 90)"/>
+        <circle cx="90" cy="90" r="70" fill="none" stroke="#d83b01" stroke-width="28" stroke-dasharray="66 374" stroke-dashoffset="-275" transform="rotate(-90 90 90)"/>
+        <circle cx="90" cy="90" r="70" fill="none" stroke="#008272" stroke-width="28" stroke-dasharray="99 341" stroke-dashoffset="-341" transform="rotate(-90 90 90)"/>
+        <!-- Center text -->
+        <text x="90" y="85" text-anchor="middle" font-size="24" font-weight="700" fill="#323130" font-family="Segoe UI">247</text>
+        <text x="90" y="102" text-anchor="middle" font-size="11" fill="#605e5c" font-family="Segoe UI">Total</text>
+      </svg>
+      <div class="donut-legend" style="margin-top:12px">
+        <div class="donut-legend-item"><div class="donut-legend-dot" style="background:#0078d4"></div> Software <span class="donut-legend-val">62</span></div>
+        <div class="donut-legend-item"><div class="donut-legend-dot" style="background:#5c2d91"></div> Network <span class="donut-legend-val">49</span></div>
+        <div class="donut-legend-item"><div class="donut-legend-dot" style="background:#107c10"></div> Hardware <span class="donut-legend-val">43</span></div>
+        <div class="donut-legend-item"><div class="donut-legend-dot" style="background:#d83b01"></div> Email <span class="donut-legend-val">37</span></div>
+        <div class="donut-legend-item"><div class="donut-legend-dot" style="background:#008272"></div> Access <span class="donut-legend-val">56</span></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Chart Row 2 -->
+  <div class="chart-row">
+
+    <!-- Tickets by Priority (Stacked Bar) -->
+    <div class="chart-card">
+      <h3>Tickets by Priority</h3>
+      <svg width="100%" height="180" viewBox="0 0 320 180">
+        <line x1="50" y1="160" x2="300" y2="160" class="axis-line"/>
+        <!-- Critical -->
+        <text x="45" y="35" class="axis-label" text-anchor="end">Critical</text>
+        <rect x="50" y="22" width="68" height="20" fill="#d13438" rx="2"/>
+        <text x="124" y="36" class="axis-label">17</text>
+        <!-- High -->
+        <text x="45" y="67" class="axis-label" text-anchor="end">High</text>
+        <rect x="50" y="54" width="144" height="20" fill="#d83b01" rx="2"/>
+        <text x="200" y="68" class="axis-label">36</text>
+        <!-- Medium -->
+        <text x="45" y="99" class="axis-label" text-anchor="end">Medium</text>
+        <rect x="50" y="86" width="240" height="20" fill="#0078d4" rx="2"/>
+        <text x="296" y="100" class="axis-label">118</text>
+        <!-- Low -->
+        <text x="45" y="131" class="axis-label" text-anchor="end">Low</text>
+        <rect x="50" y="118" width="152" height="20" fill="#a19f9d" rx="2"/>
+        <text x="208" y="132" class="axis-label">76</text>
+      </svg>
+    </div>
+
+    <!-- Tickets by Source (Pie/breakdown) -->
+    <div class="chart-card">
+      <h3>Tickets by Source</h3>
+      <svg width="180" height="180" viewBox="0 0 180 180" style="display:block;margin:0 auto">
+        <circle cx="90" cy="90" r="70" fill="none" stroke="#0078d4" stroke-width="28" stroke-dasharray="154 286" stroke-dashoffset="0" transform="rotate(-90 90 90)"/>
+        <circle cx="90" cy="90" r="70" fill="none" stroke="#5c2d91" stroke-width="28" stroke-dasharray="88 352" stroke-dashoffset="-154" transform="rotate(-90 90 90)"/>
+        <circle cx="90" cy="90" r="70" fill="none" stroke="#107c10" stroke-width="28" stroke-dasharray="66 374" stroke-dashoffset="-242" transform="rotate(-90 90 90)"/>
+        <circle cx="90" cy="90" r="70" fill="none" stroke="#d83b01" stroke-width="28" stroke-dasharray="44 396" stroke-dashoffset="-308" transform="rotate(-90 90 90)"/>
+        <circle cx="90" cy="90" r="70" fill="none" stroke="#008272" stroke-width="28" stroke-dasharray="88 352" stroke-dashoffset="-352" transform="rotate(-90 90 90)"/>
+      </svg>
+      <div class="donut-legend" style="margin-top:12px">
+        <div class="donut-legend-item"><div class="donut-legend-dot" style="background:#0078d4"></div> Portal <span class="donut-legend-val">35%</span></div>
+        <div class="donut-legend-item"><div class="donut-legend-dot" style="background:#5c2d91"></div> Email <span class="donut-legend-val">20%</span></div>
+        <div class="donut-legend-item"><div class="donut-legend-dot" style="background:#107c10"></div> Teams Bot <span class="donut-legend-val">15%</span></div>
+        <div class="donut-legend-item"><div class="donut-legend-dot" style="background:#d83b01"></div> Phone <span class="donut-legend-val">10%</span></div>
+        <div class="donut-legend-item"><div class="donut-legend-dot" style="background:#008272"></div> Walk-up <span class="donut-legend-val">20%</span></div>
+      </div>
+    </div>
+
+    <!-- Top Subcategories Table -->
+    <div class="chart-card">
+      <h3>Top 10 Subcategories</h3>
+      <table class="pbi-table">
+        <thead><tr><th>Subcategory</th><th>Tickets</th><th>Avg Hrs</th></tr></thead>
+        <tbody>
+          <tr><td>Password Reset</td><td>32 <span class="heatbar" style="width:64px;background:#0078d4"></span></td><td>1.2</td></tr>
+          <tr><td>VPN / Remote Access</td><td>28 <span class="heatbar" style="width:56px;background:#0078d4"></span></td><td>4.8</td></tr>
+          <tr><td>Email Delivery</td><td>24 <span class="heatbar" style="width:48px;background:#0078d4"></span></td><td>3.2</td></tr>
+          <tr><td>Software Install</td><td>22 <span class="heatbar" style="width:44px;background:#0078d4"></span></td><td>2.1</td></tr>
+          <tr><td>Laptop / Desktop</td><td>19 <span class="heatbar" style="width:38px;background:#0078d4"></span></td><td>8.4</td></tr>
+          <tr><td>Permissions</td><td>18 <span class="heatbar" style="width:36px;background:#0078d4"></span></td><td>2.6</td></tr>
+          <tr><td>Printer</td><td>16 <span class="heatbar" style="width:32px;background:#0078d4"></span></td><td>3.8</td></tr>
+          <tr><td>Teams / Meetings</td><td>14 <span class="heatbar" style="width:28px;background:#0078d4"></span></td><td>5.1</td></tr>
+          <tr><td>WiFi Connectivity</td><td>12 <span class="heatbar" style="width:24px;background:#0078d4"></span></td><td>2.9</td></tr>
+          <tr><td>New Hire Setup</td><td>11 <span class="heatbar" style="width:22px;background:#0078d4"></span></td><td>6.7</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+
+  <!-- Chart Row 3: SLA Gauge + Open by Status -->
+  <div class="chart-row">
+
+    <div class="chart-card" style="max-width:260px">
+      <h3>SLA Compliance</h3>
+      <div class="gauge-container">
+        <svg width="200" height="120" viewBox="0 0 200 120" style="display:block;margin:0 auto">
+          <!-- Background arc -->
+          <path d="M 20 110 A 80 80 0 0 1 180 110" fill="none" stroke="#edebe9" stroke-width="16" stroke-linecap="round"/>
+          <!-- Value arc (92.3%) -->
+          <path d="M 20 110 A 80 80 0 0 1 172 78" fill="none" stroke="#008272" stroke-width="16" stroke-linecap="round"/>
+          <!-- Target line at 95% -->
+          <line x1="170" y1="56" x2="176" y2="64" stroke="#d13438" stroke-width="2"/>
+        </svg>
+        <div class="gauge-value" style="color:#008272">92.3%</div>
+        <div class="gauge-target">Target: 95% — 🔴 Below target</div>
+      </div>
+    </div>
+
+    <div class="chart-card wide">
+      <h3>Open Tickets by Status &amp; Priority</h3>
+      <svg width="100%" height="180" viewBox="0 0 500 180">
+        <!-- Y axis -->
+        <text x="30" y="170" class="axis-label" text-anchor="end">0</text>
+        <text x="30" y="130" class="axis-label" text-anchor="end">5</text>
+        <text x="30" y="90" class="axis-label" text-anchor="end">10</text>
+        <text x="30" y="50" class="axis-label" text-anchor="end">15</text>
+        <line x1="40" y1="165" x2="480" y2="165" class="axis-line"/>
+        <line x1="40" y1="125" x2="480" y2="125" class="grid-line"/>
+        <line x1="40" y1="85" x2="480" y2="85" class="grid-line"/>
+        <line x1="40" y1="45" x2="480" y2="45" class="grid-line"/>
+        <!-- New -->
+        <text x="90" y="178" class="axis-label" text-anchor="middle">New</text>
+        <rect x="60" y="85" width="16" height="80" fill="#d13438" rx="2"/>
+        <rect x="78" y="105" width="16" height="60" fill="#d83b01" rx="2"/>
+        <rect x="96" y="125" width="16" height="40" fill="#0078d4" rx="2"/>
+        <!-- Assigned -->
+        <text x="180" y="178" class="axis-label" text-anchor="middle">Assigned</text>
+        <rect x="150" y="125" width="16" height="40" fill="#d13438" rx="2"/>
+        <rect x="168" y="105" width="16" height="60" fill="#d83b01" rx="2"/>
+        <rect x="186" y="125" width="16" height="40" fill="#0078d4" rx="2"/>
+        <rect x="204" y="145" width="16" height="20" fill="#a19f9d" rx="2"/>
+        <!-- In Progress -->
+        <text x="290" y="178" class="axis-label" text-anchor="middle">In Progress</text>
+        <rect x="258" y="105" width="16" height="60" fill="#d13438" rx="2"/>
+        <rect x="276" y="85" width="16" height="80" fill="#d83b01" rx="2"/>
+        <rect x="294" y="45" width="16" height="120" fill="#0078d4" rx="2"/>
+        <rect x="312" y="125" width="16" height="40" fill="#a19f9d" rx="2"/>
+        <!-- Waiting -->
+        <text x="400" y="178" class="axis-label" text-anchor="middle">Waiting</text>
+        <rect x="370" y="145" width="16" height="20" fill="#d13438" rx="2"/>
+        <rect x="388" y="125" width="16" height="40" fill="#d83b01" rx="2"/>
+        <rect x="406" y="105" width="16" height="60" fill="#0078d4" rx="2"/>
+        <rect x="424" y="145" width="16" height="20" fill="#a19f9d" rx="2"/>
+      </svg>
+      <div class="chart-legend">
+        <div class="legend-item"><div class="legend-dot" style="background:#d13438"></div> Critical</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#d83b01"></div> High</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#0078d4"></div> Medium</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#a19f9d"></div> Low</div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1400, initial-scale=1">
+<title>Contoso IT Help Desk – New Ticket Form</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif; background: #f5f5f5; color: #323130; font-size: 14px; line-height: 1.5; overflow: hidden; }
+
+  /* === SharePoint Suite Bar === */
+  .sp-suite-bar { background: #0078d4; height: 48px; display: flex; align-items: center; padding: 0 16px; color: #fff; }
+  .sp-suite-bar .waffle { font-size: 20px; margin-right: 16px; opacity: 0.9; }
+  .sp-suite-bar .app-name { font-size: 16px; font-weight: 600; }
+  .sp-suite-bar .spacer { flex: 1; }
+  .sp-suite-bar .search-box { background: rgba(255,255,255,0.15); border: none; border-radius: 4px; padding: 6px 12px 6px 36px; color: #fff; width: 340px; font-size: 14px; outline: none; }
+  .sp-suite-bar .search-box::placeholder { color: rgba(255,255,255,0.7); }
+  .sp-suite-bar .search-wrap { position: relative; }
+  .sp-suite-bar .search-wrap::before { content: "⌕"; position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: rgba(255,255,255,0.7); font-size: 16px; }
+  .sp-suite-bar .user-area { display: flex; align-items: center; gap: 12px; margin-left: 16px; }
+  .sp-suite-bar .avatar { width: 32px; height: 32px; border-radius: 50%; background: #106ebe; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; }
+
+  /* === Site Header === */
+  .sp-site-header { background: #fff; border-bottom: 1px solid #edebe9; padding: 16px 32px; display: flex; align-items: center; gap: 16px; }
+  .sp-site-header .site-logo { width: 40px; height: 40px; background: #0078d4; border-radius: 4px; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; font-size: 18px; }
+  .sp-site-header .site-name { font-size: 18px; font-weight: 600; }
+  .sp-site-header .site-nav { display: flex; gap: 24px; margin-top: 4px; }
+  .sp-site-header .site-nav a { color: #605e5c; text-decoration: none; font-size: 14px; }
+  .sp-site-header .site-nav a.active { color: #0078d4; font-weight: 600; border-bottom: 2px solid #0078d4; padding-bottom: 2px; }
+
+  /* === Dimmed background === */
+  .page-content { opacity: 0.4; pointer-events: none; padding: 24px; max-width: 1320px; margin: 0 auto; }
+  .page-content .webpart-container { background: #fff; border-radius: 8px; box-shadow: 0 1.6px 3.6px rgba(0,0,0,0.06); padding: 24px; }
+
+  /* === Dialog Overlay === */
+  .dialog-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.4); z-index: 100; display: flex; align-items: center; justify-content: center; }
+
+  /* === Dialog === */
+  .dialog { background: #fff; border-radius: 8px; box-shadow: 0 25px 50px rgba(0,0,0,0.25); width: 560px; max-height: 90vh; overflow-y: auto; }
+  .dialog-header { display: flex; align-items: center; justify-content: space-between; padding: 20px 24px 0; }
+  .dialog-header h2 { font-size: 20px; font-weight: 600; color: #323130; }
+  .dialog-close { background: none; border: none; font-size: 18px; color: #605e5c; cursor: pointer; padding: 4px 8px; border-radius: 4px; }
+  .dialog-close:hover { background: #f3f2f1; }
+  .dialog-body { padding: 20px 24px; }
+  .dialog-footer { display: flex; justify-content: flex-end; gap: 8px; padding: 16px 24px; border-top: 1px solid #edebe9; }
+
+  /* === Form Fields === */
+  .form-field { margin-bottom: 16px; }
+  .form-field label { display: block; font-size: 14px; font-weight: 600; color: #323130; margin-bottom: 4px; }
+  .form-field label .required { color: #d13438; margin-left: 2px; }
+  .form-field input, .form-field select, .form-field textarea {
+    width: 100%; font-family: 'Segoe UI', sans-serif; font-size: 14px; padding: 8px 12px;
+    border: 1px solid #c8c6c4; border-radius: 4px; background: #fff; color: #323130; outline: none;
+  }
+  .form-field input:focus, .form-field select:focus, .form-field textarea:focus { border-color: #0078d4; box-shadow: 0 0 0 1px #0078d4; }
+  .form-field textarea { resize: vertical; min-height: 96px; }
+  .form-field .hint { font-size: 12px; color: #a19f9d; margin-top: 2px; }
+  .form-field .char-count { font-size: 12px; color: #a19f9d; text-align: right; margin-top: 2px; }
+  .form-field select.disabled { background: #f3f2f1; color: #a19f9d; cursor: not-allowed; }
+
+  .form-row { display: flex; gap: 16px; }
+  .form-row .form-field { flex: 1; }
+
+  /* === Priority Matrix === */
+  .priority-matrix { background: #deecf9; border-radius: 6px; padding: 10px 14px; display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
+  .priority-matrix .label { font-size: 13px; color: #004578; font-weight: 600; }
+  .priority-matrix .value { font-size: 13px; color: #004578; }
+  .priority-matrix .badge { background: #0078d4; color: #fff; padding: 2px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+
+  /* === Buttons === */
+  .btn-primary { background: #0078d4; color: #fff; border: none; border-radius: 4px; padding: 8px 20px; font-size: 14px; font-weight: 600; cursor: pointer; }
+  .btn-primary:hover { background: #106ebe; }
+  .btn-outline { background: #fff; color: #323130; border: 1px solid #c8c6c4; border-radius: 4px; padding: 8px 20px; font-size: 14px; cursor: pointer; }
+  .btn-outline:hover { background: #f3f2f1; }
+
+  /* Filled form styling */
+  .form-field input.filled { border-color: #0078d4; }
+</style>
+</head>
+<body>
+
+<!-- SharePoint Suite Bar -->
+<div class="sp-suite-bar">
+  <span class="waffle">⊞</span>
+  <span class="app-name">SharePoint</span>
+  <span class="spacer"></span>
+  <div class="search-wrap"><input class="search-box" placeholder="Search in SharePoint" /></div>
+  <div class="user-area">
+    <span style="font-size:18px">⚙</span>
+    <span style="font-size:18px">?</span>
+    <div class="avatar">DM</div>
+  </div>
+</div>
+
+<!-- Site Header -->
+<div class="sp-site-header">
+  <div class="site-logo">IT</div>
+  <div>
+    <div class="site-name">Contoso IT Help Desk</div>
+    <nav class="site-nav">
+      <a href="#" class="active">Home</a>
+      <a href="#">Knowledge Base</a>
+      <a href="#">Reports</a>
+      <a href="#">Documents</a>
+    </nav>
+  </div>
+</div>
+
+<!-- Dimmed Background Content -->
+<div class="page-content">
+  <div class="webpart-container">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <h2 style="font-size:24px;font-weight:600">My Tickets</h2>
+    </div>
+    <div style="height:300px"></div>
+  </div>
+</div>
+
+<!-- Dialog Overlay -->
+<div class="dialog-overlay">
+  <div class="dialog">
+
+    <div class="dialog-header">
+      <h2>Create New Ticket</h2>
+      <button class="dialog-close">✕</button>
+    </div>
+
+    <div class="dialog-body">
+
+      <div class="form-field">
+        <label>Title <span class="required">*</span></label>
+        <input type="text" value="Cannot connect to SAP after password reset" class="filled" />
+        <div class="char-count">46 / 200</div>
+      </div>
+
+      <div class="form-field">
+        <label>Description <span class="required">*</span></label>
+        <textarea>After resetting my Active Directory password this morning, I can no longer log into SAP GUI. I get error "No RFC authorization for function module." Other applications (Outlook, Teams, VPN) are working fine with the new password.
+
+I've already tried:
+- Clearing SAP GUI cache
+- Logging out and back in
+- Restarting my machine</textarea>
+      </div>
+
+      <div class="form-row">
+        <div class="form-field">
+          <label>Category <span class="required">*</span></label>
+          <select>
+            <option>Software</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label>Subcategory</label>
+          <select>
+            <option>Enterprise Applications</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-field">
+          <label>Urgency</label>
+          <select>
+            <option>2 — High</option>
+          </select>
+          <div class="hint">How quickly does this need attention?</div>
+        </div>
+        <div class="form-field">
+          <label>Impact</label>
+          <select>
+            <option>3 — Individual</option>
+          </select>
+          <div class="hint">How many people are affected?</div>
+        </div>
+      </div>
+
+      <!-- Priority Matrix -->
+      <div class="priority-matrix">
+        <span class="label">Calculated Priority:</span>
+        <span class="badge">High</span>
+        <span class="value">— Target resolution: 8 business hours</span>
+      </div>
+
+    </div>
+
+    <div class="dialog-footer">
+      <button class="btn-outline">Cancel</button>
+      <button class="btn-primary">Submit Ticket</button>
+    </div>
+
+  </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=420, initial-scale=1">
+<title>Contoso IT Help Desk – Self-Service Portal (Canvas App)</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif; background: #e8e8e8; color: #323130; font-size: 14px; line-height: 1.5; display: flex; justify-content: center; gap: 32px; padding: 32px; flex-wrap: wrap; }
+
+  /* === Phone Frame === */
+  .phone-frame {
+    width: 390px; height: 844px; background: #faf9f8; border-radius: 40px; overflow: hidden;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.18), 0 0 0 2px #1a1a1a; position: relative;
+  }
+  .phone-frame::before {
+    content: ""; position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+    width: 126px; height: 32px; background: #1a1a1a; border-radius: 0 0 18px 18px; z-index: 10;
+  }
+
+  .phone-content { height: 100%; display: flex; flex-direction: column; overflow: hidden; }
+
+  /* === Power Apps Top Bar === */
+  .pa-navbar { background: #0078d4; height: 48px; display: flex; align-items: center; padding: 0 16px; color: #fff; flex-shrink: 0; margin-top: 32px; }
+  .pa-navbar .nav-title { font-size: 16px; font-weight: 600; flex: 1; text-align: center; }
+  .pa-navbar .nav-icon { width: 32px; text-align: center; font-size: 18px; cursor: pointer; }
+  .pa-nav-bottom { background: #fff; border-top: 1px solid #edebe9; display: flex; height: 52px; flex-shrink: 0; }
+  .pa-nav-bottom .nav-tab { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font-size: 10px; color: #605e5c; cursor: pointer; }
+  .pa-nav-bottom .nav-tab.active { color: #0078d4; }
+  .pa-nav-bottom .nav-tab .tab-icon { font-size: 18px; }
+
+  /* === Scrollable Area === */
+  .scroll-area { flex: 1; overflow-y: auto; padding: 16px; }
+
+  /* === Home Screen === */
+  .welcome { margin-bottom: 20px; }
+  .welcome h1 { font-size: 22px; font-weight: 600; color: #323130; }
+  .welcome p { font-size: 14px; color: #605e5c; }
+
+  .quick-actions { display: flex; gap: 10px; margin-bottom: 24px; }
+  .quick-action {
+    flex: 1; background: #fff; border: 1px solid #edebe9; border-radius: 12px; padding: 16px 8px;
+    text-align: center; cursor: pointer; transition: all 0.15s;
+  }
+  .quick-action:hover { border-color: #0078d4; box-shadow: 0 2px 8px rgba(0,120,212,0.12); }
+  .quick-action .qa-icon { font-size: 28px; margin-bottom: 6px; display: block; }
+  .quick-action .qa-label { font-size: 12px; font-weight: 600; color: #323130; }
+  .quick-action.primary { background: #0078d4; border-color: #0078d4; }
+  .quick-action.primary .qa-label { color: #fff; }
+
+  .section-title { font-size: 16px; font-weight: 600; color: #323130; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; }
+  .section-title .view-all { font-size: 13px; font-weight: 400; color: #0078d4; cursor: pointer; }
+
+  /* === Ticket Card (Home) === */
+  .ticket-card {
+    background: #fff; border: 1px solid #edebe9; border-radius: 10px; padding: 14px 16px;
+    margin-bottom: 10px; cursor: pointer; transition: all 0.1s;
+  }
+  .ticket-card:hover { border-color: #0078d4; }
+  .ticket-card-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+  .ticket-card-num { font-size: 13px; font-weight: 600; color: #0078d4; }
+  .ticket-card-date { font-size: 12px; color: #a19f9d; }
+  .ticket-card-title { font-size: 14px; color: #323130; font-weight: 500; margin-bottom: 8px; }
+  .ticket-card-bottom { display: flex; justify-content: space-between; align-items: center; }
+
+  .status-pill { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+  .pill-new { background: #deecf9; color: #0078d4; }
+  .pill-inprogress { background: #fff4ce; color: #835c00; }
+  .pill-waiting { background: #fed9cc; color: #a4262c; }
+  .pill-resolved { background: #dff6dd; color: #107c10; }
+  .pill-assigned { background: #e0d7ef; color: #5c2d91; }
+
+  .priority-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .dot-critical { background: #d13438; }
+  .dot-high { background: #d83b01; }
+  .dot-medium { background: #0078d4; }
+  .dot-low { background: #a19f9d; }
+
+  /* === My Tickets Screen (Second phone) === */
+  .filter-row { display: flex; gap: 8px; margin-bottom: 12px; }
+  .filter-chip { padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; border: 1px solid #c8c6c4; background: #fff; color: #605e5c; cursor: pointer; }
+  .filter-chip.active { background: #0078d4; color: #fff; border-color: #0078d4; }
+
+  .search-input { width: 100%; padding: 10px 12px 10px 36px; border: 1px solid #c8c6c4; border-radius: 8px; font-family: 'Segoe UI', sans-serif; font-size: 14px; background: #fff; outline: none; margin-bottom: 12px; position: relative; }
+  .search-wrap-mobile { position: relative; margin-bottom: 12px; }
+  .search-wrap-mobile::before { content: "🔍"; position: absolute; left: 10px; top: 50%; transform: translateY(-50%); font-size: 14px; z-index: 1; }
+  .search-wrap-mobile input { width: 100%; padding: 10px 12px 10px 36px; border: 1px solid #c8c6c4; border-radius: 8px; font-family: 'Segoe UI', sans-serif; font-size: 14px; background: #fff; outline: none; }
+
+  /* === Label === */
+  .screen-label {
+    position: absolute; bottom: -36px; left: 50%; transform: translateX(-50%);
+    font-size: 14px; font-weight: 600; color: #323130; white-space: nowrap;
+    background: #fff; padding: 4px 16px; border-radius: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+
+  .frame-wrapper { position: relative; }
+</style>
+</head>
+<body>
+
+<!-- Phone 1: Home Screen -->
+<div class="frame-wrapper">
+<div class="phone-frame">
+  <div class="phone-content">
+    <div class="pa-navbar">
+      <span class="nav-icon">☰</span>
+      <span class="nav-title">IT Help Desk</span>
+      <span class="nav-icon" style="font-size:14px">DM</span>
+    </div>
+
+    <div class="scroll-area">
+
+      <div class="welcome">
+        <h1>Welcome, Derek</h1>
+        <p>How can we help you today?</p>
+      </div>
+
+      <div class="quick-actions">
+        <div class="quick-action primary">
+          <span class="qa-icon">✚</span>
+          <span class="qa-label">Submit Ticket</span>
+        </div>
+        <div class="quick-action">
+          <span class="qa-icon">📋</span>
+          <span class="qa-label">My Tickets</span>
+        </div>
+        <div class="quick-action">
+          <span class="qa-icon">📖</span>
+          <span class="qa-label">Knowledge Base</span>
+        </div>
+      </div>
+
+      <div class="section-title">
+        Recent Tickets
+        <span class="view-all">View All →</span>
+      </div>
+
+      <div class="ticket-card">
+        <div class="ticket-card-top">
+          <span class="ticket-card-num">TKT-00025</span>
+          <span class="ticket-card-date">Mar 27</span>
+        </div>
+        <div class="ticket-card-title">VPN disconnects intermittently when switching networks</div>
+        <div class="ticket-card-bottom">
+          <span class="status-pill pill-inprogress">In Progress</span>
+          <div class="priority-dot dot-critical" title="Critical"></div>
+        </div>
+      </div>
+
+      <div class="ticket-card">
+        <div class="ticket-card-top">
+          <span class="ticket-card-num">TKT-00024</span>
+          <span class="ticket-card-date">Mar 27</span>
+        </div>
+        <div class="ticket-card-title">Unable to access shared drive \\corp\finance after migration</div>
+        <div class="ticket-card-bottom">
+          <span class="status-pill pill-new">New</span>
+          <div class="priority-dot dot-high" title="High"></div>
+        </div>
+      </div>
+
+      <div class="ticket-card">
+        <div class="ticket-card-top">
+          <span class="ticket-card-num">TKT-00021</span>
+          <span class="ticket-card-date">Mar 25</span>
+        </div>
+        <div class="ticket-card-title">Need access to Power BI Pro license for quarterly reports</div>
+        <div class="ticket-card-bottom">
+          <span class="status-pill pill-waiting">Waiting on Customer</span>
+          <div class="priority-dot dot-medium" title="Medium"></div>
+        </div>
+      </div>
+
+      <div class="ticket-card">
+        <div class="ticket-card-top">
+          <span class="ticket-card-num">TKT-00018</span>
+          <span class="ticket-card-date">Mar 22</span>
+        </div>
+        <div class="ticket-card-title">Onboarding — setup laptop and accounts for new hire</div>
+        <div class="ticket-card-bottom">
+          <span class="status-pill pill-resolved">Resolved</span>
+          <div class="priority-dot dot-medium" title="Medium"></div>
+        </div>
+      </div>
+
+      <div class="ticket-card">
+        <div class="ticket-card-top">
+          <span class="ticket-card-num">TKT-00017</span>
+          <span class="ticket-card-date">Mar 20</span>
+        </div>
+        <div class="ticket-card-title">WiFi coverage weak in Building B, 2nd floor</div>
+        <div class="ticket-card-bottom">
+          <span class="status-pill pill-resolved">Resolved</span>
+          <div class="priority-dot dot-low" title="Low"></div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="pa-nav-bottom">
+      <div class="nav-tab active"><span class="tab-icon">🏠</span> Home</div>
+      <div class="nav-tab"><span class="tab-icon">✚</span> New</div>
+      <div class="nav-tab"><span class="tab-icon">📋</span> Tickets</div>
+      <div class="nav-tab"><span class="tab-icon">🔍</span> KB</div>
+    </div>
+  </div>
+</div>
+<div class="screen-label">Home Screen</div>
+</div>
+
+<!-- Phone 2: My Tickets Screen -->
+<div class="frame-wrapper">
+<div class="phone-frame">
+  <div class="phone-content">
+    <div class="pa-navbar">
+      <span class="nav-icon">←</span>
+      <span class="nav-title">My Tickets</span>
+      <span class="nav-icon" style="font-size:16px">⚙</span>
+    </div>
+
+    <div class="scroll-area">
+
+      <div class="search-wrap-mobile">
+        <input type="text" placeholder="Search by ticket # or title..." />
+      </div>
+
+      <div class="filter-row">
+        <span class="filter-chip active">All</span>
+        <span class="filter-chip">Open</span>
+        <span class="filter-chip">Resolved</span>
+        <span class="filter-chip">Closed</span>
+      </div>
+
+      <div class="ticket-card">
+        <div class="ticket-card-top">
+          <span class="ticket-card-num">TKT-00025</span>
+          <span class="ticket-card-date">Mar 27, 2026</span>
+        </div>
+        <div class="ticket-card-title">VPN disconnects intermittently when switching networks</div>
+        <div class="ticket-card-bottom">
+          <span class="status-pill pill-inprogress">In Progress</span>
+          <div class="priority-dot dot-critical"></div>
+        </div>
+      </div>
+
+      <div class="ticket-card">
+        <div class="ticket-card-top">
+          <span class="ticket-card-num">TKT-00024</span>
+          <span class="ticket-card-date">Mar 27, 2026</span>
+        </div>
+        <div class="ticket-card-title">Unable to access shared drive \\corp\finance after migration</div>
+        <div class="ticket-card-bottom">
+          <span class="status-pill pill-new">New</span>
+          <div class="priority-dot dot-high"></div>
+        </div>
+      </div>
+
+      <div class="ticket-card">
+        <div class="ticket-card-top">
+          <span class="ticket-card-num">TKT-00023</span>
+          <span class="ticket-card-date">Mar 26, 2026</span>
+        </div>
+        <div class="ticket-card-title">Request new monitor — dual display setup for design team</div>
+        <div class="ticket-card-bottom">
+          <span class="status-pill pill-assigned">Assigned</span>
+          <div class="priority-dot dot-medium"></div>
+        </div>
+      </div>
+
+      <div class="ticket-card">
+        <div class="ticket-card-top">
+          <span class="ticket-card-num">TKT-00022</span>
+          <span class="ticket-card-date">Mar 26, 2026</span>
+        </div>
+        <div class="ticket-card-title">Outlook keeps crashing on launch after latest update</div>
+        <div class="ticket-card-bottom">
+          <span class="status-pill pill-inprogress">In Progress</span>
+          <div class="priority-dot dot-high"></div>
+        </div>
+      </div>
+
+      <div class="ticket-card">
+        <div class="ticket-card-top">
+          <span class="ticket-card-num">TKT-00021</span>
+          <span class="ticket-card-date">Mar 25, 2026</span>
+        </div>
+        <div class="ticket-card-title">Need access to Power BI Pro license for quarterly reports</div>
+        <div class="ticket-card-bottom">
+          <span class="status-pill pill-waiting">Waiting on Customer</span>
+          <div class="priority-dot dot-medium"></div>
+        </div>
+      </div>
+
+      <div class="ticket-card">
+        <div class="ticket-card-top">
+          <span class="ticket-card-num">TKT-00020</span>
+          <span class="ticket-card-date">Mar 25, 2026</span>
+        </div>
+        <div class="ticket-card-title">Printer on 3rd floor (HP LaserJet) showing offline status</div>
+        <div class="ticket-card-bottom">
+          <span class="status-pill pill-inprogress">In Progress</span>
+          <div class="priority-dot dot-medium"></div>
+        </div>
+      </div>
+
+      <div class="ticket-card">
+        <div class="ticket-card-top">
+          <span class="ticket-card-num">TKT-00019</span>
+          <span class="ticket-card-date">Mar 24, 2026</span>
+        </div>
+        <div class="ticket-card-title">Teams calls dropping audio after 10 minutes</div>
+        <div class="ticket-card-bottom">
+          <span class="status-pill pill-assigned">Assigned</span>
+          <div class="priority-dot dot-high"></div>
+        </div>
+      </div>
+
+      <div class="ticket-card">
+        <div class="ticket-card-top">
+          <span class="ticket-card-num">TKT-00018</span>
+          <span class="ticket-card-date">Mar 22, 2026</span>
+        </div>
+        <div class="ticket-card-title">Onboarding — setup laptop and accounts for new hire (Sarah L.)</div>
+        <div class="ticket-card-bottom">
+          <span class="status-pill pill-resolved">Resolved</span>
+          <div class="priority-dot dot-medium"></div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="pa-nav-bottom">
+      <div class="nav-tab"><span class="tab-icon">🏠</span> Home</div>
+      <div class="nav-tab"><span class="tab-icon">✚</span> New</div>
+      <div class="nav-tab active"><span class="tab-icon">📋</span> Tickets</div>
+      <div class="nav-tab"><span class="tab-icon">🔍</span> KB</div>
+    </div>
+  </div>
+</div>
+<div class="screen-label">My Tickets Screen</div>
+</div>
+
+</body>
+</html>

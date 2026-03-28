@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1400, initial-scale=1">
+<title>Contoso IT Help Desk – Ticket Detail Panel</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif; background: #f5f5f5; color: #323130; font-size: 14px; line-height: 1.5; overflow: hidden; }
+
+  /* === SharePoint Suite Bar === */
+  .sp-suite-bar { background: #0078d4; height: 48px; display: flex; align-items: center; padding: 0 16px; color: #fff; }
+  .sp-suite-bar .waffle { font-size: 20px; margin-right: 16px; cursor: pointer; opacity: 0.9; }
+  .sp-suite-bar .app-name { font-size: 16px; font-weight: 600; }
+  .sp-suite-bar .spacer { flex: 1; }
+  .sp-suite-bar .search-box { background: rgba(255,255,255,0.15); border: none; border-radius: 4px; padding: 6px 12px 6px 36px; color: #fff; width: 340px; font-size: 14px; outline: none; }
+  .sp-suite-bar .search-box::placeholder { color: rgba(255,255,255,0.7); }
+  .sp-suite-bar .search-wrap { position: relative; }
+  .sp-suite-bar .search-wrap::before { content: "⌕"; position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: rgba(255,255,255,0.7); font-size: 16px; }
+  .sp-suite-bar .user-area { display: flex; align-items: center; gap: 12px; margin-left: 16px; }
+  .sp-suite-bar .avatar { width: 32px; height: 32px; border-radius: 50%; background: #106ebe; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; }
+
+  /* === Site Header === */
+  .sp-site-header { background: #fff; border-bottom: 1px solid #edebe9; padding: 16px 32px; display: flex; align-items: center; gap: 16px; }
+  .sp-site-header .site-logo { width: 40px; height: 40px; background: #0078d4; border-radius: 4px; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; font-size: 18px; }
+  .sp-site-header .site-name { font-size: 18px; font-weight: 600; color: #323130; }
+  .sp-site-header .site-nav { display: flex; gap: 24px; margin-top: 4px; }
+  .sp-site-header .site-nav a { color: #605e5c; text-decoration: none; font-size: 14px; }
+  .sp-site-header .site-nav a.active { color: #0078d4; font-weight: 600; border-bottom: 2px solid #0078d4; padding-bottom: 2px; }
+
+  /* === Layout === */
+  .layout { display: flex; height: calc(100vh - 110px); }
+  .main-content { flex: 1; overflow-y: auto; padding: 24px; }
+  .main-content .webpart-container { background: #fff; border-radius: 8px; box-shadow: 0 1.6px 3.6px rgba(0,0,0,0.06); padding: 24px; opacity: 0.5; pointer-events: none; }
+
+  /* === Overlay === */
+  .overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.4); z-index: 100; }
+
+  /* === Detail Panel === */
+  .detail-panel { position: fixed; top: 0; right: 0; width: 520px; height: 100vh; background: #fff; z-index: 200; box-shadow: -4px 0 24px rgba(0,0,0,0.15); display: flex; flex-direction: column; overflow: hidden; }
+
+  .panel-header { display: flex; align-items: center; justify-content: space-between; padding: 20px 24px; border-bottom: 1px solid #edebe9; flex-shrink: 0; }
+  .panel-header h2 { font-size: 18px; font-weight: 600; color: #323130; flex: 1; }
+  .panel-close { background: none; border: none; font-size: 20px; color: #605e5c; cursor: pointer; padding: 4px 8px; border-radius: 4px; }
+  .panel-close:hover { background: #f3f2f1; }
+
+  .panel-body { flex: 1; overflow-y: auto; padding: 24px; }
+
+  /* === Detail Grid === */
+  .detail-grid { display: grid; grid-template-columns: 140px 1fr; gap: 12px 16px; margin-bottom: 24px; }
+  .detail-label { font-size: 13px; font-weight: 600; color: #605e5c; }
+  .detail-value { font-size: 14px; color: #323130; }
+
+  .status-badge { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+  .status-inprogress { background: #fff4ce; color: #835c00; }
+
+  .priority { display: flex; align-items: center; gap: 6px; }
+  .priority-arrow { font-weight: 700; }
+  .priority-critical .priority-arrow { color: #d13438; }
+
+  .sla-breach-tag { display: inline-flex; align-items: center; gap: 4px; color: #d13438; font-weight: 600; font-size: 13px; background: #fde7e9; padding: 2px 8px; border-radius: 4px; }
+
+  /* === Description === */
+  .section-heading { font-size: 16px; font-weight: 600; color: #323130; margin-bottom: 8px; margin-top: 4px; }
+  .description-text { font-size: 14px; color: #323130; white-space: pre-wrap; line-height: 1.6; background: #faf9f8; padding: 12px; border-radius: 6px; border: 1px solid #edebe9; }
+
+  .divider { border: none; border-top: 1px solid #edebe9; margin: 20px 0; }
+
+  /* === Comment Thread === */
+  .comment-thread { margin-top: 0; }
+  .comment { margin-bottom: 16px; }
+  .comment-header { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+  .comment-avatar { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 10px; font-weight: 600; flex-shrink: 0; }
+  .comment-name { font-size: 13px; font-weight: 600; color: #323130; }
+  .comment-time { font-size: 12px; color: #a19f9d; }
+  .comment-internal { font-size: 11px; background: #fff4ce; color: #835c00; padding: 1px 6px; border-radius: 3px; font-weight: 600; }
+  .comment-body { margin-left: 36px; font-size: 14px; color: #323130; line-height: 1.5; background: #faf9f8; padding: 10px 12px; border-radius: 6px; border: 1px solid #edebe9; }
+  .comment-body.internal { background: #fffcf0; border-color: #f5e6b8; }
+
+  /* === Add Comment === */
+  .add-comment { margin-top: 16px; }
+  .add-comment textarea { width: 100%; border: 1px solid #c8c6c4; border-radius: 6px; padding: 10px 12px; font-family: 'Segoe UI', sans-serif; font-size: 14px; resize: vertical; min-height: 72px; outline: none; }
+  .add-comment textarea:focus { border-color: #0078d4; }
+  .add-comment-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px; }
+  .btn-primary { background: #0078d4; color: #fff; border: none; border-radius: 4px; padding: 6px 16px; font-size: 14px; font-weight: 600; cursor: pointer; }
+  .btn-primary:hover { background: #106ebe; }
+
+  /* === Mini dashboard behind panel === */
+  .dashboard-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+  .dashboard-header h2 { font-size: 24px; font-weight: 600; color: #323130; }
+  .data-grid { width: 100%; border-collapse: collapse; }
+  .data-grid thead th { text-align: left; font-size: 12px; font-weight: 600; color: #605e5c; padding: 10px 12px; border-bottom: 2px solid #edebe9; }
+  .data-grid tbody tr { border-bottom: 1px solid #f3f2f1; }
+  .data-grid tbody td { padding: 12px; font-size: 14px; }
+  .status-badge.status-new { background: #deecf9; color: #0078d4; }
+  .status-badge.status-assigned { background: #e0d7ef; color: #5c2d91; }
+  .status-badge.status-resolved { background: #dff6dd; color: #107c10; }
+</style>
+</head>
+<body>
+
+<!-- SharePoint Suite Bar -->
+<div class="sp-suite-bar">
+  <span class="waffle">⊞</span>
+  <span class="app-name">SharePoint</span>
+  <span class="spacer"></span>
+  <div class="search-wrap"><input class="search-box" placeholder="Search in SharePoint" /></div>
+  <div class="user-area">
+    <span style="font-size:18px">⚙</span>
+    <span style="font-size:18px">?</span>
+    <div class="avatar">DM</div>
+  </div>
+</div>
+
+<!-- Site Header -->
+<div class="sp-site-header">
+  <div class="site-logo">IT</div>
+  <div>
+    <div class="site-name">Contoso IT Help Desk</div>
+    <nav class="site-nav">
+      <a href="#" class="active">Home</a>
+      <a href="#">Knowledge Base</a>
+      <a href="#">Reports</a>
+      <a href="#">Documents</a>
+    </nav>
+  </div>
+</div>
+
+<div class="layout">
+  <!-- Background dashboard (dimmed) -->
+  <div class="main-content">
+    <div class="webpart-container">
+      <div class="dashboard-header"><h2>My Tickets</h2></div>
+      <table class="data-grid">
+        <thead><tr><th>Ticket #</th><th>Title</th><th>Status</th><th>Priority</th><th>Assigned To</th><th>Created</th></tr></thead>
+        <tbody>
+          <tr><td style="color:#0078d4;font-weight:600">TKT-00025</td><td>VPN disconnects intermittently when switching networks</td><td><span class="status-badge status-inprogress">In Progress</span></td><td>Critical</td><td>James Reid</td><td>Mar 27</td></tr>
+          <tr><td style="color:#0078d4;font-weight:600">TKT-00024</td><td>Unable to access shared drive \\corp\finance</td><td><span class="status-badge status-new">New</span></td><td>High</td><td>Unassigned</td><td>Mar 27</td></tr>
+          <tr><td style="color:#0078d4;font-weight:600">TKT-00023</td><td>Request new monitor — dual display setup</td><td><span class="status-badge status-assigned">Assigned</span></td><td>Medium</td><td>Aisha Patel</td><td>Mar 26</td></tr>
+          <tr><td style="color:#0078d4;font-weight:600">TKT-00022</td><td>Outlook keeps crashing on launch</td><td><span class="status-badge status-inprogress">In Progress</span></td><td>High</td><td>Marcus Kim</td><td>Mar 26</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Overlay -->
+  <div class="overlay"></div>
+
+  <!-- Detail Panel -->
+  <div class="detail-panel">
+    <div class="panel-header">
+      <h2>TKT-00025 — VPN disconnects intermittently</h2>
+      <button class="panel-close">✕</button>
+    </div>
+    <div class="panel-body">
+
+      <!-- Detail Fields -->
+      <div class="detail-grid">
+        <div class="detail-label">Status</div>
+        <div class="detail-value"><span class="status-badge status-inprogress">In Progress</span></div>
+
+        <div class="detail-label">Priority</div>
+        <div class="detail-value"><div class="priority priority-critical"><span class="priority-arrow">▲</span> Critical</div></div>
+
+        <div class="detail-label">Category</div>
+        <div class="detail-value">Network</div>
+
+        <div class="detail-label">Subcategory</div>
+        <div class="detail-value">VPN / Remote Access</div>
+
+        <div class="detail-label">Assigned To</div>
+        <div class="detail-value">James Reid</div>
+
+        <div class="detail-label">Requester</div>
+        <div class="detail-value">Derek Morgan</div>
+
+        <div class="detail-label">Created</div>
+        <div class="detail-value">Mar 27, 2026 9:15 AM</div>
+
+        <div class="detail-label">Due Date</div>
+        <div class="detail-value" style="color:#d13438; font-weight:600;">Mar 28, 2026 9:15 AM</div>
+
+        <div class="detail-label">SLA Status</div>
+        <div class="detail-value"><span class="sla-breach-tag">⚠ SLA Breach</span></div>
+      </div>
+
+      <hr class="divider">
+
+      <!-- Description -->
+      <div class="section-heading">Description</div>
+      <div class="description-text">VPN connection drops every 15-20 minutes when switching between WiFi networks (e.g., moving from desk to conference room). This is affecting my ability to stay connected to internal resources during meetings.
+
+Environment: Windows 11, GlobalProtect VPN client v6.2
+Steps to reproduce:
+1. Connect to VPN on primary WiFi
+2. Move to a different floor / conference room
+3. Laptop auto-switches to nearest AP
+4. VPN drops and requires manual reconnect
+
+This started after the latest GlobalProtect update last Tuesday.</div>
+
+      <hr class="divider">
+
+      <!-- Comments -->
+      <div class="section-heading">Comments (3)</div>
+      <div class="comment-thread">
+
+        <div class="comment">
+          <div class="comment-header">
+            <div class="comment-avatar" style="background:#0078d4">JR</div>
+            <span class="comment-name">James Reid</span>
+            <span class="comment-time">Mar 27, 2026 10:42 AM</span>
+          </div>
+          <div class="comment-body">Hi Derek, I've started looking into this. Can you confirm which GlobalProtect version you're on? Also, are you on the "Contoso-Corp" or "Contoso-Guest" WiFi network when this happens?</div>
+        </div>
+
+        <div class="comment">
+          <div class="comment-header">
+            <div class="comment-avatar" style="background:#106ebe">DM</div>
+            <span class="comment-name">Derek Morgan</span>
+            <span class="comment-time">Mar 27, 2026 11:08 AM</span>
+          </div>
+          <div class="comment-body">It's GlobalProtect 6.2.1-39. Always on Contoso-Corp. Happens across buildings — I tested walking from Building A to Building B yesterday and the VPN dropped 3 times.</div>
+        </div>
+
+        <div class="comment">
+          <div class="comment-header">
+            <div class="comment-avatar" style="background:#0078d4">JR</div>
+            <span class="comment-name">James Reid</span>
+            <span class="comment-time">Mar 27, 2026 2:30 PM</span>
+            <span class="comment-internal">Internal</span>
+          </div>
+          <div class="comment-body internal">Confirmed this is a known issue with GP 6.2.1. The seamless roaming feature has a regression. Palo Alto released a hotfix (6.2.1-45) yesterday. Scheduling deployment to Derek's machine tomorrow AM. Also checking if other users on 6.2.1 are affected — running a report from SCCM.</div>
+        </div>
+
+      </div>
+
+      <!-- Add Comment -->
+      <div class="add-comment">
+        <textarea placeholder="Add a comment..."></textarea>
+        <div class="add-comment-actions">
+          <button class="btn-primary">Send</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

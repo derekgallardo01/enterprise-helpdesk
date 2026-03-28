@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1400, initial-scale=1">
+<title>Contoso IT Help Desk – Ticket Dashboard</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif; background: #f5f5f5; color: #323130; font-size: 14px; line-height: 1.5; }
+
+  /* === SharePoint Suite Bar === */
+  .sp-suite-bar { background: #0078d4; height: 48px; display: flex; align-items: center; padding: 0 16px; color: #fff; }
+  .sp-suite-bar .waffle { font-size: 20px; margin-right: 16px; cursor: pointer; opacity: 0.9; }
+  .sp-suite-bar .app-name { font-size: 16px; font-weight: 600; }
+  .sp-suite-bar .spacer { flex: 1; }
+  .sp-suite-bar .search-box { background: rgba(255,255,255,0.15); border: none; border-radius: 4px; padding: 6px 12px 6px 36px; color: #fff; width: 340px; font-size: 14px; outline: none; }
+  .sp-suite-bar .search-box::placeholder { color: rgba(255,255,255,0.7); }
+  .sp-suite-bar .search-wrap { position: relative; }
+  .sp-suite-bar .search-wrap::before { content: "⌕"; position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: rgba(255,255,255,0.7); font-size: 16px; }
+  .sp-suite-bar .user-area { display: flex; align-items: center; gap: 12px; margin-left: 16px; }
+  .sp-suite-bar .avatar { width: 32px; height: 32px; border-radius: 50%; background: #106ebe; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; }
+
+  /* === SharePoint Site Header === */
+  .sp-site-header { background: #fff; border-bottom: 1px solid #edebe9; padding: 16px 32px; display: flex; align-items: center; gap: 16px; }
+  .sp-site-header .site-logo { width: 40px; height: 40px; background: #0078d4; border-radius: 4px; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; font-size: 18px; }
+  .sp-site-header .site-info .site-name { font-size: 18px; font-weight: 600; color: #323130; }
+  .sp-site-header .site-info .site-nav { display: flex; gap: 24px; margin-top: 4px; }
+  .sp-site-header .site-info .site-nav a { color: #605e5c; text-decoration: none; font-size: 14px; }
+  .sp-site-header .site-info .site-nav a.active { color: #0078d4; font-weight: 600; border-bottom: 2px solid #0078d4; padding-bottom: 2px; }
+
+  /* === Web Part Container === */
+  .webpart-container { max-width: 1320px; margin: 24px auto; background: #fff; border-radius: 8px; box-shadow: 0 1.6px 3.6px rgba(0,0,0,0.06), 0 0.3px 0.9px rgba(0,0,0,0.04); padding: 24px; }
+
+  /* === Dashboard Header === */
+  .dashboard-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+  .dashboard-header h2 { font-size: 24px; font-weight: 600; color: #323130; }
+  .btn-primary { background: #0078d4; color: #fff; border: none; border-radius: 4px; padding: 8px 16px; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+  .btn-primary:hover { background: #106ebe; }
+  .btn-primary svg { width: 16px; height: 16px; fill: currentColor; }
+
+  /* === KPI Summary Bar === */
+  .kpi-bar { display: flex; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }
+  .kpi-card { flex: 1; min-width: 140px; background: #faf9f8; border: 1px solid #edebe9; border-radius: 8px; padding: 16px; text-align: center; }
+  .kpi-card .kpi-value { font-size: 28px; font-weight: 700; color: #0078d4; }
+  .kpi-card .kpi-label { font-size: 12px; color: #605e5c; margin-top: 2px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .kpi-card.warning .kpi-value { color: #d83b01; }
+  .kpi-card.success .kpi-value { color: #107c10; }
+
+  /* === Filter Toolbar === */
+  .filter-toolbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 16px; padding: 12px 16px; background: #faf9f8; border-radius: 6px; border: 1px solid #edebe9; }
+  .filter-toolbar input, .filter-toolbar select {
+    font-family: 'Segoe UI', sans-serif; font-size: 14px; padding: 6px 12px; border: 1px solid #c8c6c4;
+    border-radius: 4px; background: #fff; color: #323130; outline: none; min-width: 160px;
+  }
+  .filter-toolbar input:focus, .filter-toolbar select:focus { border-color: #0078d4; }
+  .filter-toolbar input { width: 260px; }
+  .btn-subtle { background: transparent; border: 1px solid #c8c6c4; border-radius: 4px; padding: 6px 12px; font-size: 13px; color: #605e5c; cursor: pointer; }
+  .btn-subtle:hover { background: #f3f2f1; }
+
+  /* === Data Grid === */
+  .data-grid { width: 100%; border-collapse: collapse; }
+  .data-grid thead th {
+    text-align: left; font-size: 12px; font-weight: 600; color: #605e5c; text-transform: uppercase;
+    letter-spacing: 0.5px; padding: 10px 12px; border-bottom: 2px solid #edebe9; cursor: pointer;
+    user-select: none; white-space: nowrap;
+  }
+  .data-grid thead th:hover { color: #323130; }
+  .data-grid thead th .sort-arrow { font-size: 10px; margin-left: 4px; opacity: 0.5; }
+  .data-grid thead th.sorted .sort-arrow { opacity: 1; color: #0078d4; }
+  .data-grid tbody tr { border-bottom: 1px solid #f3f2f1; cursor: pointer; transition: background 0.1s; }
+  .data-grid tbody tr:hover { background: #f5f5f5; }
+  .data-grid tbody td { padding: 12px; font-size: 14px; vertical-align: middle; }
+  .data-grid tbody td.ticket-num { font-weight: 600; color: #0078d4; }
+  .data-grid tbody td.title-cell { max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  /* === Status Badge === */
+  .status-badge { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+  .status-new { background: #deecf9; color: #0078d4; }
+  .status-assigned { background: #e0d7ef; color: #5c2d91; }
+  .status-inprogress { background: #fff4ce; color: #835c00; }
+  .status-waiting { background: #fed9cc; color: #a4262c; }
+  .status-resolved { background: #dff6dd; color: #107c10; }
+  .status-closed { background: #f3f2f1; color: #605e5c; }
+
+  /* === Priority Icon === */
+  .priority { display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+  .priority-arrow { display: inline-flex; font-size: 14px; font-weight: 700; }
+  .priority-critical .priority-arrow { color: #d13438; }
+  .priority-high .priority-arrow { color: #d83b01; }
+  .priority-medium .priority-arrow { color: #0078d4; }
+  .priority-low .priority-arrow { color: #a19f9d; }
+
+  /* === Assigned === */
+  .assigned-cell { display: flex; align-items: center; gap: 8px; }
+  .mini-avatar { width: 24px; height: 24px; border-radius: 50%; font-size: 10px; font-weight: 600; display: flex; align-items: center; justify-content: center; color: #fff; flex-shrink: 0; }
+
+  /* === SLA breach === */
+  .sla-breach { color: #d13438; font-weight: 600; }
+  .sla-ok { color: #323130; }
+
+  /* === Load More === */
+  .load-more { display: flex; justify-content: center; margin-top: 16px; }
+  .btn-secondary { background: #fff; border: 1px solid #c8c6c4; border-radius: 4px; padding: 8px 20px; font-size: 14px; color: #323130; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+  .btn-secondary:hover { background: #f3f2f1; }
+
+  /* === Footer === */
+  .grid-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; padding-top: 12px; border-top: 1px solid #edebe9; font-size: 13px; color: #605e5c; }
+</style>
+</head>
+<body>
+
+<!-- SharePoint Suite Bar -->
+<div class="sp-suite-bar">
+  <span class="waffle">⊞</span>
+  <span class="app-name">SharePoint</span>
+  <span class="spacer"></span>
+  <div class="search-wrap">
+    <input class="search-box" placeholder="Search in SharePoint" />
+  </div>
+  <div class="user-area">
+    <span style="font-size:18px; cursor:pointer;">⚙</span>
+    <span style="font-size:18px; cursor:pointer;">?</span>
+    <div class="avatar">DM</div>
+  </div>
+</div>
+
+<!-- Site Header -->
+<div class="sp-site-header">
+  <div class="site-logo">IT</div>
+  <div class="site-info">
+    <div class="site-name">Contoso IT Help Desk</div>
+    <nav class="site-nav">
+      <a href="#" class="active">Home</a>
+      <a href="#">Knowledge Base</a>
+      <a href="#">Reports</a>
+      <a href="#">Documents</a>
+    </nav>
+  </div>
+</div>
+
+<!-- Web Part -->
+<div class="webpart-container">
+
+  <!-- Dashboard Header -->
+  <div class="dashboard-header">
+    <h2>My Tickets</h2>
+    <button class="btn-primary">
+      <svg viewBox="0 0 16 16"><path d="M8 2a.75.75 0 01.75.75v4.5h4.5a.75.75 0 010 1.5h-4.5v4.5a.75.75 0 01-1.5 0v-4.5h-4.5a.75.75 0 010-1.5h4.5v-4.5A.75.75 0 018 2z"/></svg>
+      New Ticket
+    </button>
+  </div>
+
+  <!-- KPI Summary -->
+  <div class="kpi-bar">
+    <div class="kpi-card"><div class="kpi-value">25</div><div class="kpi-label">Total Tickets</div></div>
+    <div class="kpi-card"><div class="kpi-value">14</div><div class="kpi-label">Open</div></div>
+    <div class="kpi-card warning"><div class="kpi-value">3</div><div class="kpi-label">SLA Breaches</div></div>
+    <div class="kpi-card success"><div class="kpi-value">92%</div><div class="kpi-label">SLA Compliance</div></div>
+    <div class="kpi-card"><div class="kpi-value">4.2</div><div class="kpi-label">Avg Satisfaction</div></div>
+  </div>
+
+  <!-- Filter Toolbar -->
+  <div class="filter-toolbar">
+    <input type="text" placeholder="🔍  Search ticket # or title..." />
+    <select>
+      <option>All Statuses</option>
+      <option>New</option>
+      <option>Assigned</option>
+      <option>In Progress</option>
+      <option>Waiting on Customer</option>
+      <option>Resolved</option>
+      <option>Closed</option>
+    </select>
+    <select>
+      <option>All Priorities</option>
+      <option>Critical</option>
+      <option>High</option>
+      <option>Medium</option>
+      <option>Low</option>
+    </select>
+    <select>
+      <option>All Categories</option>
+      <option>Hardware</option>
+      <option>Software</option>
+      <option>Network</option>
+      <option>Access &amp; Permissions</option>
+      <option>Email &amp; Collaboration</option>
+    </select>
+    <button class="btn-subtle">Clear Filters</button>
+  </div>
+
+  <!-- Data Grid -->
+  <table class="data-grid">
+    <thead>
+      <tr>
+        <th class="sorted">Ticket # <span class="sort-arrow">▼</span></th>
+        <th>Title</th>
+        <th>Status</th>
+        <th>Priority</th>
+        <th>Category</th>
+        <th>Assigned To</th>
+        <th>Created</th>
+        <th>Due Date</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="ticket-num">TKT-00025</td>
+        <td class="title-cell">VPN disconnects intermittently when switching networks</td>
+        <td><span class="status-badge status-inprogress">In Progress</span></td>
+        <td><div class="priority priority-critical"><span class="priority-arrow">▲</span> Critical</div></td>
+        <td>Network</td>
+        <td><div class="assigned-cell"><div class="mini-avatar" style="background:#0078d4">JR</div> James Reid</div></td>
+        <td>Mar 27, 2026</td>
+        <td class="sla-breach">Mar 28, 2026 ⚠</td>
+      </tr>
+      <tr>
+        <td class="ticket-num">TKT-00024</td>
+        <td class="title-cell">Unable to access shared drive \\corp\finance after migration</td>
+        <td><span class="status-badge status-new">New</span></td>
+        <td><div class="priority priority-high"><span class="priority-arrow">▲</span> High</div></td>
+        <td>Access &amp; Permissions</td>
+        <td><div class="assigned-cell"><span style="color:#a19f9d; font-style:italic">Unassigned</span></div></td>
+        <td>Mar 27, 2026</td>
+        <td class="sla-ok">Mar 29, 2026</td>
+      </tr>
+      <tr>
+        <td class="ticket-num">TKT-00023</td>
+        <td class="title-cell">Request new monitor — dual display setup for design team</td>
+        <td><span class="status-badge status-assigned">Assigned</span></td>
+        <td><div class="priority priority-medium"><span class="priority-arrow">━</span> Medium</div></td>
+        <td>Hardware</td>
+        <td><div class="assigned-cell"><div class="mini-avatar" style="background:#5c2d91">AP</div> Aisha Patel</div></td>
+        <td>Mar 26, 2026</td>
+        <td class="sla-ok">Apr 2, 2026</td>
+      </tr>
+      <tr>
+        <td class="ticket-num">TKT-00022</td>
+        <td class="title-cell">Outlook keeps crashing on launch after latest update</td>
+        <td><span class="status-badge status-inprogress">In Progress</span></td>
+        <td><div class="priority priority-high"><span class="priority-arrow">▲</span> High</div></td>
+        <td>Software</td>
+        <td><div class="assigned-cell"><div class="mini-avatar" style="background:#107c10">MK</div> Marcus Kim</div></td>
+        <td>Mar 26, 2026</td>
+        <td class="sla-breach">Mar 27, 2026 ⚠</td>
+      </tr>
+      <tr>
+        <td class="ticket-num">TKT-00021</td>
+        <td class="title-cell">Need access to Power BI Pro license for quarterly reports</td>
+        <td><span class="status-badge status-waiting">Waiting on Customer</span></td>
+        <td><div class="priority priority-medium"><span class="priority-arrow">━</span> Medium</div></td>
+        <td>Software</td>
+        <td><div class="assigned-cell"><div class="mini-avatar" style="background:#0078d4">JR</div> James Reid</div></td>
+        <td>Mar 25, 2026</td>
+        <td class="sla-ok">Apr 1, 2026</td>
+      </tr>
+      <tr>
+        <td class="ticket-num">TKT-00020</td>
+        <td class="title-cell">Printer on 3rd floor (HP LaserJet) showing offline status</td>
+        <td><span class="status-badge status-inprogress">In Progress</span></td>
+        <td><div class="priority priority-medium"><span class="priority-arrow">━</span> Medium</div></td>
+        <td>Hardware</td>
+        <td><div class="assigned-cell"><div class="mini-avatar" style="background:#5c2d91">AP</div> Aisha Patel</div></td>
+        <td>Mar 25, 2026</td>
+        <td class="sla-ok">Mar 31, 2026</td>
+      </tr>
+      <tr>
+        <td class="ticket-num">TKT-00019</td>
+        <td class="title-cell">Teams calls dropping audio after 10 minutes</td>
+        <td><span class="status-badge status-assigned">Assigned</span></td>
+        <td><div class="priority priority-high"><span class="priority-arrow">▲</span> High</div></td>
+        <td>Email &amp; Collaboration</td>
+        <td><div class="assigned-cell"><div class="mini-avatar" style="background:#107c10">MK</div> Marcus Kim</div></td>
+        <td>Mar 24, 2026</td>
+        <td class="sla-breach">Mar 26, 2026 ⚠</td>
+      </tr>
+      <tr>
+        <td class="ticket-num">TKT-00018</td>
+        <td class="title-cell">Onboarding — setup laptop and accounts for new hire (Sarah L.)</td>
+        <td><span class="status-badge status-resolved">Resolved</span></td>
+        <td><div class="priority priority-medium"><span class="priority-arrow">━</span> Medium</div></td>
+        <td>Access &amp; Permissions</td>
+        <td><div class="assigned-cell"><div class="mini-avatar" style="background:#0078d4">JR</div> James Reid</div></td>
+        <td>Mar 22, 2026</td>
+        <td class="sla-ok">Mar 28, 2026</td>
+      </tr>
+      <tr>
+        <td class="ticket-num">TKT-00017</td>
+        <td class="title-cell">WiFi coverage weak in Building B, 2nd floor conference rooms</td>
+        <td><span class="status-badge status-resolved">Resolved</span></td>
+        <td><div class="priority priority-low"><span class="priority-arrow">▼</span> Low</div></td>
+        <td>Network</td>
+        <td><div class="assigned-cell"><div class="mini-avatar" style="background:#5c2d91">AP</div> Aisha Patel</div></td>
+        <td>Mar 20, 2026</td>
+        <td class="sla-ok">Mar 27, 2026</td>
+      </tr>
+      <tr>
+        <td class="ticket-num">TKT-00016</td>
+        <td class="title-cell">Adobe Creative Cloud not activating — license error 213:11</td>
+        <td><span class="status-badge status-closed">Closed</span></td>
+        <td><div class="priority priority-low"><span class="priority-arrow">▼</span> Low</div></td>
+        <td>Software</td>
+        <td><div class="assigned-cell"><div class="mini-avatar" style="background:#107c10">MK</div> Marcus Kim</div></td>
+        <td>Mar 18, 2026</td>
+        <td class="sla-ok">Mar 25, 2026</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- Footer -->
+  <div class="grid-footer">
+    <span>Showing 10 of 25 tickets</span>
+    <button class="btn-secondary">
+      <span>↓</span> Load More
+    </button>
+  </div>
+
+</div>
+
+</body>
+</html>

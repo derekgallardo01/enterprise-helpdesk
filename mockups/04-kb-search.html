@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1400, initial-scale=1">
+<title>Contoso IT Help Desk – Knowledge Base</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif; background: #f5f5f5; color: #323130; font-size: 14px; line-height: 1.5; }
+
+  /* === SharePoint Suite Bar === */
+  .sp-suite-bar { background: #0078d4; height: 48px; display: flex; align-items: center; padding: 0 16px; color: #fff; }
+  .sp-suite-bar .waffle { font-size: 20px; margin-right: 16px; opacity: 0.9; }
+  .sp-suite-bar .app-name { font-size: 16px; font-weight: 600; }
+  .sp-suite-bar .spacer { flex: 1; }
+  .sp-suite-bar .search-box { background: rgba(255,255,255,0.15); border: none; border-radius: 4px; padding: 6px 12px 6px 36px; color: #fff; width: 340px; font-size: 14px; outline: none; }
+  .sp-suite-bar .search-box::placeholder { color: rgba(255,255,255,0.7); }
+  .sp-suite-bar .search-wrap { position: relative; }
+  .sp-suite-bar .search-wrap::before { content: "⌕"; position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: rgba(255,255,255,0.7); font-size: 16px; }
+  .sp-suite-bar .user-area { display: flex; align-items: center; gap: 12px; margin-left: 16px; }
+  .sp-suite-bar .avatar { width: 32px; height: 32px; border-radius: 50%; background: #106ebe; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; }
+
+  /* === Site Header === */
+  .sp-site-header { background: #fff; border-bottom: 1px solid #edebe9; padding: 16px 32px; display: flex; align-items: center; gap: 16px; }
+  .sp-site-header .site-logo { width: 40px; height: 40px; background: #0078d4; border-radius: 4px; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; font-size: 18px; }
+  .sp-site-header .site-name { font-size: 18px; font-weight: 600; }
+  .sp-site-header .site-nav { display: flex; gap: 24px; margin-top: 4px; }
+  .sp-site-header .site-nav a { color: #605e5c; text-decoration: none; font-size: 14px; }
+  .sp-site-header .site-nav a.active { color: #0078d4; font-weight: 600; border-bottom: 2px solid #0078d4; padding-bottom: 2px; }
+
+  /* === Web Part Container === */
+  .webpart-container { max-width: 1320px; margin: 24px auto; background: #fff; border-radius: 8px; box-shadow: 0 1.6px 3.6px rgba(0,0,0,0.06), 0 0.3px 0.9px rgba(0,0,0,0.04); padding: 32px; }
+
+  /* === Header === */
+  .kb-header { text-align: center; margin-bottom: 28px; }
+  .kb-header h2 { font-size: 28px; font-weight: 600; color: #323130; margin-bottom: 4px; }
+  .kb-header p { color: #605e5c; font-size: 15px; }
+
+  /* === Search Box === */
+  .search-container { max-width: 640px; margin: 0 auto 32px; position: relative; }
+  .search-container input {
+    width: 100%; font-family: 'Segoe UI', sans-serif; font-size: 16px; padding: 12px 16px 12px 44px;
+    border: 2px solid #c8c6c4; border-radius: 8px; background: #fff; color: #323130; outline: none;
+    transition: border-color 0.15s;
+  }
+  .search-container input:focus { border-color: #0078d4; box-shadow: 0 0 0 1px #0078d4; }
+  .search-container .search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 18px; color: #605e5c; }
+
+  /* === Results Count === */
+  .results-info { font-size: 14px; color: #605e5c; margin-bottom: 16px; }
+  .results-info strong { color: #323130; }
+
+  /* === Card Grid === */
+  .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 16px; }
+
+  /* === KB Article Card === */
+  .kb-card {
+    border: 1px solid #edebe9; border-radius: 8px; padding: 20px; cursor: pointer;
+    transition: box-shadow 0.15s, border-color 0.15s;
+  }
+  .kb-card:hover { border-color: #0078d4; box-shadow: 0 4px 12px rgba(0,120,212,0.12); }
+  .kb-card-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 10px; }
+  .kb-card-title { font-size: 16px; font-weight: 600; color: #0078d4; line-height: 1.3; flex: 1; }
+  .kb-card-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; border: 1px solid; white-space: nowrap; margin-left: 8px; flex-shrink: 0; }
+  .badge-network { color: #0078d4; border-color: #0078d4; background: #deecf9; }
+  .badge-software { color: #5c2d91; border-color: #5c2d91; background: #e0d7ef; }
+  .badge-hardware { color: #107c10; border-color: #107c10; background: #dff6dd; }
+  .badge-email { color: #d83b01; border-color: #d83b01; background: #fed9cc; }
+  .badge-access { color: #835c00; border-color: #835c00; background: #fff4ce; }
+  .badge-security { color: #a4262c; border-color: #a4262c; background: #fde7e9; }
+
+  .kb-card-snippet { font-size: 14px; color: #605e5c; line-height: 1.5; margin-bottom: 14px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+  .kb-card-snippet mark { background: #fff4ce; color: #323130; padding: 0 2px; border-radius: 2px; }
+
+  .kb-card-footer { display: flex; align-items: center; justify-content: space-between; }
+  .kb-card-stats { display: flex; gap: 14px; }
+  .stat { display: flex; align-items: center; gap: 4px; font-size: 12px; color: #a19f9d; }
+  .stat-icon { font-size: 13px; }
+
+  .kb-card-feedback { display: flex; align-items: center; gap: 4px; }
+  .fb-label { font-size: 12px; color: #a19f9d; }
+  .fb-btn { background: none; border: 1px solid #edebe9; border-radius: 4px; padding: 3px 8px; cursor: pointer; font-size: 13px; color: #605e5c; transition: all 0.1s; }
+  .fb-btn:hover { background: #f3f2f1; }
+  .fb-btn.voted { background: #deecf9; border-color: #0078d4; color: #0078d4; }
+
+  /* === Pagination === */
+  .pagination { display: flex; justify-content: center; margin-top: 24px; gap: 4px; }
+  .page-btn { background: #fff; border: 1px solid #c8c6c4; border-radius: 4px; padding: 6px 12px; font-size: 14px; cursor: pointer; color: #323130; min-width: 36px; text-align: center; }
+  .page-btn:hover { background: #f3f2f1; }
+  .page-btn.active { background: #0078d4; color: #fff; border-color: #0078d4; }
+</style>
+</head>
+<body>
+
+<!-- SharePoint Suite Bar -->
+<div class="sp-suite-bar">
+  <span class="waffle">⊞</span>
+  <span class="app-name">SharePoint</span>
+  <span class="spacer"></span>
+  <div class="search-wrap"><input class="search-box" placeholder="Search in SharePoint" /></div>
+  <div class="user-area">
+    <span style="font-size:18px">⚙</span>
+    <span style="font-size:18px">?</span>
+    <div class="avatar">DM</div>
+  </div>
+</div>
+
+<!-- Site Header -->
+<div class="sp-site-header">
+  <div class="site-logo">IT</div>
+  <div>
+    <div class="site-name">Contoso IT Help Desk</div>
+    <nav class="site-nav">
+      <a href="#">Home</a>
+      <a href="#" class="active">Knowledge Base</a>
+      <a href="#">Reports</a>
+      <a href="#">Documents</a>
+    </nav>
+  </div>
+</div>
+
+<!-- Web Part -->
+<div class="webpart-container">
+
+  <!-- Header -->
+  <div class="kb-header">
+    <h2>Knowledge Base</h2>
+    <p>Search for solutions before submitting a ticket</p>
+  </div>
+
+  <!-- Search -->
+  <div class="search-container">
+    <span class="search-icon">🔍</span>
+    <input type="text" value="VPN connection" placeholder="Search the knowledge base..." />
+  </div>
+
+  <!-- Results Info -->
+  <div class="results-info">Showing <strong>6</strong> results for "<strong>VPN connection</strong>"</div>
+
+  <!-- Card Grid -->
+  <div class="card-grid">
+
+    <!-- Card 1 -->
+    <div class="kb-card">
+      <div class="kb-card-header">
+        <span class="kb-card-title">How to Troubleshoot VPN Connection Issues</span>
+        <span class="kb-card-badge badge-network">Network</span>
+      </div>
+      <div class="kb-card-snippet">Step-by-step guide to diagnose and resolve common <mark>VPN connection</mark> problems including timeout errors, authentication failures, and split-tunnel configuration on GlobalProtect.</div>
+      <div class="kb-card-footer">
+        <div class="kb-card-stats">
+          <span class="stat"><span class="stat-icon">👁</span> 342</span>
+          <span class="stat"><span class="stat-icon">👍</span> 89</span>
+        </div>
+        <div class="kb-card-feedback">
+          <span class="fb-label">Helpful?</span>
+          <button class="fb-btn voted">👍</button>
+          <button class="fb-btn">👎</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 2 -->
+    <div class="kb-card">
+      <div class="kb-card-header">
+        <span class="kb-card-title">VPN Drops When Switching WiFi Networks</span>
+        <span class="kb-card-badge badge-network">Network</span>
+      </div>
+      <div class="kb-card-snippet">If your <mark>VPN connection</mark> drops when moving between buildings or WiFi access points, this article explains how to enable seamless roaming and check your GlobalProtect client version.</div>
+      <div class="kb-card-footer">
+        <div class="kb-card-stats">
+          <span class="stat"><span class="stat-icon">👁</span> 156</span>
+          <span class="stat"><span class="stat-icon">👍</span> 41</span>
+        </div>
+        <div class="kb-card-feedback">
+          <span class="fb-label">Helpful?</span>
+          <button class="fb-btn">👍</button>
+          <button class="fb-btn">👎</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 3 -->
+    <div class="kb-card">
+      <div class="kb-card-header">
+        <span class="kb-card-title">Setting Up VPN Access for Remote Workers</span>
+        <span class="kb-card-badge badge-access">Access</span>
+      </div>
+      <div class="kb-card-snippet">Complete onboarding guide for configuring <mark>VPN</mark> access on company-managed and BYOD devices. Includes GlobalProtect installation, MFA enrollment, and <mark>connection</mark> verification steps.</div>
+      <div class="kb-card-footer">
+        <div class="kb-card-stats">
+          <span class="stat"><span class="stat-icon">👁</span> 523</span>
+          <span class="stat"><span class="stat-icon">👍</span> 127</span>
+        </div>
+        <div class="kb-card-feedback">
+          <span class="fb-label">Helpful?</span>
+          <button class="fb-btn">👍</button>
+          <button class="fb-btn">👎</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 4 -->
+    <div class="kb-card">
+      <div class="kb-card-header">
+        <span class="kb-card-title">VPN Performance Optimization Tips</span>
+        <span class="kb-card-badge badge-network">Network</span>
+      </div>
+      <div class="kb-card-snippet">Improve your <mark>VPN connection</mark> speed and stability with these recommended settings. Covers DNS configuration, MTU tuning, and split-tunnel policies for bandwidth-heavy applications.</div>
+      <div class="kb-card-footer">
+        <div class="kb-card-stats">
+          <span class="stat"><span class="stat-icon">👁</span> 198</span>
+          <span class="stat"><span class="stat-icon">👍</span> 56</span>
+        </div>
+        <div class="kb-card-feedback">
+          <span class="fb-label">Helpful?</span>
+          <button class="fb-btn">👍</button>
+          <button class="fb-btn">👎</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 5 -->
+    <div class="kb-card">
+      <div class="kb-card-header">
+        <span class="kb-card-title">Firewall Exceptions for VPN Connectivity</span>
+        <span class="kb-card-badge badge-security">Security</span>
+      </div>
+      <div class="kb-card-snippet">List of required firewall ports and IP ranges for GlobalProtect <mark>VPN</mark>. Use this guide if your <mark>connection</mark> is blocked by a personal firewall, hotel network, or third-party security software.</div>
+      <div class="kb-card-footer">
+        <div class="kb-card-stats">
+          <span class="stat"><span class="stat-icon">👁</span> 87</span>
+          <span class="stat"><span class="stat-icon">👍</span> 22</span>
+        </div>
+        <div class="kb-card-feedback">
+          <span class="fb-label">Helpful?</span>
+          <button class="fb-btn">👍</button>
+          <button class="fb-btn">👎</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Card 6 -->
+    <div class="kb-card">
+      <div class="kb-card-header">
+        <span class="kb-card-title">Known Issue: VPN Disconnects on GP 6.2.1</span>
+        <span class="kb-card-badge badge-software">Software</span>
+      </div>
+      <div class="kb-card-snippet">A known regression in GlobalProtect 6.2.1 causes intermittent <mark>VPN</mark> disconnects during network transitions. Hotfix 6.2.1-45 is available — contact IT to schedule deployment to your device.</div>
+      <div class="kb-card-footer">
+        <div class="kb-card-stats">
+          <span class="stat"><span class="stat-icon">👁</span> 64</span>
+          <span class="stat"><span class="stat-icon">👍</span> 18</span>
+        </div>
+        <div class="kb-card-feedback">
+          <span class="fb-label">Helpful?</span>
+          <button class="fb-btn">👍</button>
+          <button class="fb-btn">👎</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+</body>
+</html>
